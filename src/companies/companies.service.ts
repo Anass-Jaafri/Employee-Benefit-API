@@ -1,50 +1,47 @@
-import { Injectable,NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Company } from './companies.entity';
+import { Repository } from 'typeorm';
+import { CreateCompanyDto } from './dto/create-company.dto';
+import { UpdateCompanyDto } from './dto/update-company.dto';
 
-export interface Company {
-  id: number;
-  name: string;
-  industry: string;
-  employeeCount: number;
-}
+
 
 @Injectable()
 export class CompaniesService {
-    
-  private companies: Company[] = [
-    { id: 1, name: 'Acme Corp', industry: 'Tech', employeeCount: 120 },
-    { id: 2, name: 'Flow ESN', industry: 'Consulting', employeeCount: 45 },
-  ];
-   private nextId = 3;
+  constructor(
+    @InjectRepository(Company) private companiesRepository: Repository<Company>,
+  ) { }
 
-  findAll(): Company[] {
-    return this.companies;
+  findAll(): Promise<Company[]> {
+    return this.companiesRepository.find();
   }
 
-  findOne(id: number): Company {
-    const companies = this.companies.find(c => c.id === id);
-        
-        if(!companies) throw new NotFoundException('Company Not Found');
-        return companies;
+  async findOne(id: number): Promise<Company> {
+
+    const companies = await this.companiesRepository.findOneBy({ id })
+    if (!companies) throw new NotFoundException('Company not found');
+    return companies;
   }
 
-  createCompany(company: { name: string; industry: string; employeeCount: number}){
-    const newCompany = {id: this.nextId++,...company};
-    this.companies.push(newCompany);
-    return newCompany;
+  createCompany(data: CreateCompanyDto): Promise<Company> {
+    const newCompany = this.companiesRepository.create(data);
+    return this.companiesRepository.save(newCompany);
   }
 
-  updateCompany(id: number,data: {name?: string; industry?: string; employeeCount?: number}){
+  async updateCompany(id: number, data: UpdateCompanyDto): Promise<Company> {
 
-    const company = this.companies.find(c=>c.id===id);
-    if(!company) throw new NotFoundException('Company not found');
-    Object.assign(company,data);
-    return company;
+    const company = await this.companiesRepository.findOneBy({ id })
+    if (!company) throw new NotFoundException('Company not found');
+    Object.assign(company, data);
+
+    return this.companiesRepository.save(company);
   }
 
-  removeCompany(id:number){
-    const index = this.companies.findIndex(c=>c.id===id);
-    if(index===-1) throw new NotFoundException('Company not found');
-    this.companies.splice(index,1);
-    return{message: 'Company deleted successfully'};
+  async removeCompany(id: number): Promise<{ message: string }> {
+
+    await this.companiesRepository.delete(id);
+    return { message: 'Company deleted successfully' };
+
   }
 }
