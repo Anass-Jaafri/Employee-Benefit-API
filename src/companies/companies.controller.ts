@@ -6,29 +6,36 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/user.entity';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+
+@ApiTags('companies')
+@ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('companies')
 export class CompaniesController {
     constructor(private readonly companiesservice: CompaniesService) { }
 
+    @ApiOperation({ summary: 'Get all companies' })
     @Get()
     getCompanies() {
         return this.companiesservice.findAll();
     }
 
+    @ApiOperation({ summary: 'Get a company by id' })
     @Get(':id')
     getCompaniesById(@Param('id') id: string) {
         return this.companiesservice.findOne(+id);
     }
 
-
+    @ApiOperation({ summary: 'Create a company' })
     @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
     @Post()
     createCompany(@Body() body: CreateCompanyDto) {
         return this.companiesservice.createCompany(body);
     }
 
+    @ApiOperation({ summary: 'Update company details' })
     @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
     @Patch(':id')
     updateCompany(@Param('id') id: string, @Body() body: UpdateCompanyDto) {
@@ -37,6 +44,7 @@ export class CompaniesController {
 
     }
 
+    @ApiOperation({ summary: 'Delete company' })
     @Roles(UserRole.ADMIN)
     @Delete(':id')
     deleteCompany(@Param('id') id: string) {
