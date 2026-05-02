@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { ApiHideProperty } from "@nestjs/swagger";
+import { Column, DeleteDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Company {
@@ -14,5 +15,9 @@ export class Company {
 
     @Column()
     employeeCount: number;
+
+    @ApiHideProperty()
+    @DeleteDateColumn({ select: false })
+    deletedAt: Date;
 
 }

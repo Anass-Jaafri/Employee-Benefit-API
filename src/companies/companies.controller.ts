@@ -22,6 +22,13 @@ export class CompaniesController {
         return this.companiesservice.findAll();
     }
 
+    @ApiOperation({ summary: 'Get all deactivated companies' })
+    @Roles(UserRole.ADMIN)
+    @Get('deleted')
+    getDeletedCompanies() {
+        return this.companiesservice.findDeleted();
+    }
+
     @ApiOperation({ summary: 'Get a company by id' })
     @Get(':id')
     getCompaniesById(@Param('id') id: string) {
@@ -48,9 +55,14 @@ export class CompaniesController {
     @Roles(UserRole.ADMIN)
     @Delete(':id')
     deleteCompany(@Param('id') id: string) {
-
         return this.companiesservice.removeCompany(+id);
+    }
 
+    @ApiOperation({ summary: 'Restore a deactivated company' })
+    @Roles(UserRole.ADMIN)
+    @Patch(':id/restore')
+    restoreCompany(@Param('id') id: string) {
+        return this.companiesservice.restoreCompany(+id);
     }
 
 
