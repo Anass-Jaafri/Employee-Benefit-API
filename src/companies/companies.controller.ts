@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -31,8 +31,8 @@ export class CompaniesController {
 
     @ApiOperation({ summary: 'Get a company by id' })
     @Get(':id')
-    getCompaniesById(@Param('id') id: string) {
-        return this.companiesservice.findOne(+id);
+    getCompaniesById(@Param('id', ParseIntPipe) id: number) {
+        return this.companiesservice.findOne(id);
     }
 
     @ApiOperation({ summary: 'Create a company' })
@@ -42,28 +42,30 @@ export class CompaniesController {
         return this.companiesservice.createCompany(body);
     }
 
+    @ApiOperation({ summary: 'Restore a deactivated company' })
+    @Roles(UserRole.ADMIN)
+    @Patch(':id/restore')
+    restoreCompany(@Param('id', ParseIntPipe) id: number) {
+        return this.companiesservice.restoreCompany(id);
+    }
+
     @ApiOperation({ summary: 'Update company details' })
     @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
     @Patch(':id')
-    updateCompany(@Param('id') id: string, @Body() body: UpdateCompanyDto) {
+    updateCompany(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCompanyDto) {
 
-        return this.companiesservice.updateCompany(+id, body);
+        return this.companiesservice.updateCompany(id, body);
 
     }
 
     @ApiOperation({ summary: 'Delete company' })
     @Roles(UserRole.ADMIN)
     @Delete(':id')
-    deleteCompany(@Param('id') id: string) {
-        return this.companiesservice.removeCompany(+id);
+    deleteCompany(@Param('id', ParseIntPipe) id: number) {
+        return this.companiesservice.removeCompany(id);
     }
 
-    @ApiOperation({ summary: 'Restore a deactivated company' })
-    @Roles(UserRole.ADMIN)
-    @Patch(':id/restore')
-    restoreCompany(@Param('id') id: string) {
-        return this.companiesservice.restoreCompany(+id);
-    }
+
 
 
 }

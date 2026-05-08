@@ -5,12 +5,17 @@ import * as bcrypt from 'bcrypt';
 import { UserRole } from 'src/users/user.entity';
 import { RegisterUserDto } from './dto/register.dto';
 import { LoginUserDto } from './dto/login.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Employee } from 'src/employees/employee.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
+        @InjectRepository(Employee)
+        private employeesRepository: Repository<Employee>
     ) { }
 
     async register(data: RegisterUserDto) {
@@ -22,6 +27,15 @@ export class AuthService {
         // Hash password
         const hashedPassword = await bcrypt.hash(data.password, 10);
         const user = await this.usersService.create(data.email, hashedPassword);
+
+        // automatically create a linked Employee record
+        const employee = this.employeesRepository.create({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            user,
+        });
+        await this.employeesRepository.save(employee);
 
         return { message: 'User registered successfully', userId: user.id };
     }
