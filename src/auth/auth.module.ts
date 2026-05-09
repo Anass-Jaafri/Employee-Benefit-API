@@ -11,7 +11,6 @@ import { Employee } from 'src/employees/employee.entity';
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([Employee]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
