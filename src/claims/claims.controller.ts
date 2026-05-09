@@ -64,4 +64,13 @@ export class ClaimsController {
     ) {
         return this.claimsService.reviewClaim(id, dto, user.id);
     }
+
+    @ApiOperation({ summary: 'Get remaining benefit amount for an employee in a package' })
+    @Get('remaining/:packageId/:employeeId')
+    getRemainingAmount(
+        @Param('packageId', ParseIntPipe) packageId: number,
+        @Param('employeeId', ParseIntPipe) employeeId: number,
+    ) {
+        return this.claimsService.getRemainingAmount(packageId, employeeId);
+    }
 }

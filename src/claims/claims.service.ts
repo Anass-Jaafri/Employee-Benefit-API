@@ -46,6 +46,23 @@ export class ClaimsService {
         return employee.claims;
     }
 
+    private async getCommittedAmount(
+        packageId: number,
+        employeeId: number,
+    ): Promise<number> {
+        const result = await this.claimsRepository
+            .createQueryBuilder('claim')
+            .select('SUM(claim.amount)', 'total')
+            .where('claim.benefitPackageId = :packageId', { packageId })
+            .andWhere('claim.employeeId = :employeeId', { employeeId })
+            .andWhere('claim.status IN (:...statuses)', {
+                statuses: [ClaimStatus.APPROVED, ClaimStatus.PENDING],
+            })
+            .getRawOne();
+
+        return parseFloat(result.total) || 0;
+    }
+
     async createClaim(data: CreateClaimDto, userId: number): Promise<Claim> {
         // find the employee profile linked to the logged-in user
         const employee = await this.employeesRepository.findOne({
@@ -71,13 +88,16 @@ export class ClaimsService {
             );
 
         // verify claim amount doesn't exceed package limit
-        if (
-            benefitPackage.maxBenefitAmount &&
-            data.amount > benefitPackage.maxBenefitAmount
-        )
-            throw new BadRequestException(
-                `Claim amount exceeds package limit of ${benefitPackage.maxBenefitAmount}`,
+        if (benefitPackage.maxBenefitAmount) {
+            const committed = await this.getCommittedAmount(
+                data.benefitPackageId,
+                employee.id,
             );
+            if (committed + data.amount > benefitPackage.maxBenefitAmount)
+                throw new BadRequestException(
+                    `Insufficient remaining benefit amount. Used: ${committed}, Limit: ${benefitPackage.maxBenefitAmount}`,
+                );
+        }
 
         const claim = this.claimsRepository.create({
             ...data,
@@ -89,6 +109,32 @@ export class ClaimsService {
         return this.claimsRepository.save(claim);
     }
 
+    async getRemainingAmount(packageId: number, employeeId: number) {
+        const pkg = await this.benefitPackagesRepository.findOneBy({ id: packageId });
+        if (!pkg) throw new NotFoundException('Benefit package not found');
+
+        if (!pkg.maxBenefitAmount) {
+            return {
+                packageId,
+                employeeId,
+                maxBenefitAmount: null,
+                committed: 0,
+                remainingAmount: null,
+                note: 'No limit set for this package',
+            };
+        }
+
+        const committed = await this.getCommittedAmount(packageId, employeeId);
+
+        return {
+            packageId,
+            employeeId,
+            maxBenefitAmount: pkg.maxBenefitAmount,
+            committed,
+            remainingAmount: pkg.maxBenefitAmount - committed,
+        };
+    }
+
     async reviewClaim(
         claimId: number,
         data: ReviewClaimDto,
@@ -98,9 +144,7 @@ export class ClaimsService {
 
         // can only review pending claims
         if (claim.status !== ClaimStatus.PENDING)
-            throw new BadRequestException(
-                `Claim has already been ${claim.status}`,
-            );
+            throw new BadRequestException(`Claim has already been ${claim.status}`);
 
         // rejection requires a reason
         if (data.status === ClaimStatus.REJECTED && !data.rejectionReason)
