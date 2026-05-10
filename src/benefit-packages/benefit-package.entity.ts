@@ -38,10 +38,10 @@ export class BenefitPackage {
     })
     maxBenefitAmount: number;
 
-    @Column({ nullable: true })
+    @Column({ type: 'date', nullable: true })
     startDate: Date;
 
-    @Column({ nullable: true })
+    @Column({ type: 'date', nullable: true })
     endDate: Date;
 
     @CreateDateColumn()

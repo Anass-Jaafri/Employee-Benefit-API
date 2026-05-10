@@ -28,6 +28,7 @@ import { ClaimsModule } from './claims/claims.module';
         username: config.get<string>('DB_USERNAME'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
+        timezone: 'UTC',
         autoLoadEntities: true,
         synchronize: true,
       }),

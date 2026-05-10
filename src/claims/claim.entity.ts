@@ -57,7 +57,7 @@ export class Claim {
     @Column({ type: 'varchar', nullable: true })
     rejectionReason: string | null;
 
-    @Column({ nullable: true })
+    @Column({ type: 'timestamptz', nullable: true })
     reviewedAt: Date;
 
     @CreateDateColumn()
