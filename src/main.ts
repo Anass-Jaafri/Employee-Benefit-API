@@ -12,7 +12,7 @@ async function bootstrap() {
     new ClassSerializerInterceptor(app.get(Reflector)),
   );
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: process.env.FRONTEND_URL,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
