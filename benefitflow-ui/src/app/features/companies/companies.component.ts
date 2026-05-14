@@ -6,10 +6,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { CompaniesService } from '../../core/services/companies.service';
+import { CompaniesService } from './companies.service';
 import { Company } from '../../shared/models';
-import { CompanyDialogComponent } from './companies-dialog.component';
-import { ConfirmDialogComponent } from '../../shared/models/components/confirm-dialog.component';
+import { CompanyDialogComponent } from './company-dialog.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 
 @Component({
   selector: 'app-companies',

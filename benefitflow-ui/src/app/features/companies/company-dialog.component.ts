@@ -6,20 +6,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { signal } from '@angular/core';
-import { CompaniesService } from '../../core/services/companies.service';
+import { CompaniesService } from './companies.service';
 import { Company } from '../../shared/models';
 
 @Component({
-    selector: 'app-company-dialog',
-    imports: [
-        ReactiveFormsModule,
-        MatDialogModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatButtonModule,
-        MatProgressSpinnerModule,
-    ],
-    template: `
+  selector: 'app-company-dialog',
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
+  template: `
     <h2 mat-dialog-title>{{ isEdit ? 'Edit Company' : 'New Company' }}</h2>
 
     <mat-dialog-content>
@@ -70,7 +70,7 @@ import { Company } from '../../shared/models';
       </button>
     </mat-dialog-actions>
   `,
-    styles: [`
+  styles: [`
     mat-dialog-content {
       display: flex;
       flex-direction: column;
@@ -83,38 +83,38 @@ import { Company } from '../../shared/models';
   `],
 })
 export class CompanyDialogComponent {
-    private fb = inject(FormBuilder);
-    private companiesService = inject(CompaniesService);
-    private dialogRef = inject(MatDialogRef<CompanyDialogComponent>);
-    private data: Company | null = inject(MAT_DIALOG_DATA);
+  private fb = inject(FormBuilder);
+  private companiesService = inject(CompaniesService);
+  private dialogRef = inject(MatDialogRef<CompanyDialogComponent>);
+  private data: Company | null = inject(MAT_DIALOG_DATA);
 
-    loading = signal(false);
-    isEdit = !!this.data;
+  loading = signal(false);
+  isEdit = !!this.data;
 
-    form = this.fb.group({
-        name: [this.data?.name ?? '', Validators.required],
-        industry: [this.data?.industry ?? '', Validators.required],
-        employeeCount: [this.data?.employeeCount ?? null, [Validators.required, Validators.min(1)]],
+  form = this.fb.group({
+    name: [this.data?.name ?? '', Validators.required],
+    industry: [this.data?.industry ?? '', Validators.required],
+    employeeCount: [this.data?.employeeCount ?? null, [Validators.required, Validators.min(1)]],
+  });
+
+  submit() {
+    if (this.form.invalid) return;
+    this.loading.set(true);
+
+    const value = this.form.value;
+    const payload = {
+      name: value.name!,
+      industry: value.industry!,
+      employeeCount: Number(value.employeeCount),
+    };
+
+    const request$ = this.isEdit
+      ? this.companiesService.update(this.data!.id, payload)
+      : this.companiesService.create(payload);
+
+    request$.subscribe({
+      next: () => this.dialogRef.close(true),
+      error: () => this.loading.set(false),
     });
-
-    submit() {
-        if (this.form.invalid) return;
-        this.loading.set(true);
-
-        const value = this.form.value;
-        const payload = {
-            name: value.name!,
-            industry: value.industry!,
-            employeeCount: Number(value.employeeCount),
-        };
-
-        const request$ = this.isEdit
-            ? this.companiesService.update(this.data!.id, payload)
-            : this.companiesService.create(payload);
-
-        request$.subscribe({
-            next: () => this.dialogRef.close(true),
-            error: () => this.loading.set(false),
-        });
-    }
+  }
 }

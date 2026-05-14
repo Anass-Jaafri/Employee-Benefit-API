@@ -1,3 +1,5 @@
+import { Company } from "./company.model";
+
 export type PerkType =
     | 'health_insurance'
     | 'meal_voucher'
@@ -15,4 +17,5 @@ export interface BenefitPackage {
     startDate: string | null;   // 'YYYY-MM-DD' — date type from backend
     endDate: string | null;
     createdAt: string;
+    company: Company;
 }

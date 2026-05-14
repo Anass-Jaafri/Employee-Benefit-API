@@ -1,3 +1,5 @@
+import { Company } from "./company.model";
+
 export type EmploymentStatus = 'active' | 'inactive' | 'on_leave';
 
 export interface Employee {
@@ -7,4 +9,5 @@ export interface Employee {
     email: string;
     jobTitle: string | null;
     status: EmploymentStatus;
+    company: Company;
 }
