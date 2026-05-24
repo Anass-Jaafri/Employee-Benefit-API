@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BenefitPackage } from './benefit-package.entity';
@@ -6,6 +6,8 @@ import { CreateBenefitPackageDto } from './dto/create-benefit-package.dto';
 import { UpdateBenefitPackageDto } from './dto/update-benefit-package.dto';
 import { CompaniesService } from '../companies/companies.service';
 import { Employee } from 'src/employees/employee.entity';
+import { BenefitPackageResponseDto } from './dto/benefit-package-response.dto';
+import { toDto, toDtoArray } from 'src/common/helpers/serialize';
 
 @Injectable()
 export class BenefitPackagesService {
@@ -18,43 +20,72 @@ export class BenefitPackagesService {
         private companiesService: CompaniesService,
     ) { }
 
-    findAll(): Promise<BenefitPackage[]> {
-        return this.benefitPackagesRepository.find({
+    async findAll(): Promise<BenefitPackageResponseDto[]> {
+        const pkg = await this.benefitPackagesRepository.find({
             relations: ['company'],
         });
+
+        return toDtoArray(BenefitPackageResponseDto, pkg);
     }
 
-    async findOne(id: number): Promise<BenefitPackage> {
+    async findOne(id: number): Promise<BenefitPackageResponseDto> {
         const pkg = await this.benefitPackagesRepository.findOne({
             where: { id },
-            relations: ['company', 'employees'],
+            relations: ['company'],
         });
         if (!pkg) throw new NotFoundException('Benefit package not found');
-        return pkg;
+        return toDto(BenefitPackageResponseDto, pkg);
+    }
+
+    async findMyPackages(userId: number): Promise<BenefitPackageResponseDto[]> {
+        const employee = await this.employeesRepository.findOne({
+            where: { user: { id: userId } },
+            relations: ['benefitPackages', 'benefitPackages.company'],
+        });
+
+        if (!employee) throw new NotFoundException('Employee profile not found');
+
+        return toDtoArray(BenefitPackageResponseDto, employee.benefitPackages);
+    }
+
+    async findByCompany(companyId: number): Promise<BenefitPackageResponseDto[]> {
+        const packages = await this.benefitPackagesRepository.find({
+            where: { company: { id: companyId } },
+            relations: ['company'],
+        });
+        return toDtoArray(BenefitPackageResponseDto, packages);
     }
 
     async createBenefitPackage(
         data: CreateBenefitPackageDto,
-    ): Promise<BenefitPackage> {
-        const company = await this.companiesService.findOne(data.companyId);
+    ): Promise<BenefitPackageResponseDto> {
+        const company = await this.companiesService.findOneEntity(data.companyId);;
         const pkg = this.benefitPackagesRepository.create({
             ...data,
             company,
         });
-        return this.benefitPackagesRepository.save(pkg);
+        const saved = await this.benefitPackagesRepository.save(pkg);
+        const full = await this.benefitPackagesRepository.findOne({
+            where: { id: saved.id },
+            relations: ['company']
+        })
+        return toDto(BenefitPackageResponseDto, full!);
     }
 
     async updateBenefitPackage(
         id: number,
         data: UpdateBenefitPackageDto,
-    ): Promise<BenefitPackage> {
-        const pkg = await this.findOne(id);
+    ): Promise<BenefitPackageResponseDto> {
+        const pkg = await this.benefitPackagesRepository.findOneBy({ id });
+        if (!pkg) throw new NotFoundException('Package not found');
         Object.assign(pkg, data);
-        return this.benefitPackagesRepository.save(pkg);
+        const saved = await this.benefitPackagesRepository.save(pkg)
+        return toDto(BenefitPackageResponseDto, saved);
     }
 
     async removeBenefitPackage(id: number): Promise<{ message: string }> {
-        const pkg = await this.findOne(id);
+        const pkg = await this.benefitPackagesRepository.findOneBy({ id });
+        if (!pkg) throw new NotFoundException('Package not found');
         await this.benefitPackagesRepository.remove(pkg);
         return { message: 'Benefit package removed successfully' };
     }
@@ -64,7 +95,10 @@ export class BenefitPackagesService {
         packageId: number,
         employeeId: number,
     ): Promise<{ message: string }> {
-        const pkg = await this.findOne(packageId);
+        const pkg = await this.benefitPackagesRepository.findOne({
+            where: { id: packageId }
+        });
+        if (!pkg) throw new NotFoundException('Package not found');
         const employee = await this.employeesRepository.findOne({
             where: { id: employeeId },
             relations: ['benefitPackages'],
@@ -80,5 +114,20 @@ export class BenefitPackagesService {
         employee.benefitPackages = [...employee.benefitPackages, pkg];
         await this.employeesRepository.save(employee);
         return { message: 'Employee enrolled successfully' };
+    }
+
+    async verifyOwnership(packageId: number, userId: number): Promise<void> {
+        const employee = await this.employeesRepository.findOne({
+            where: { user: { id: userId } },
+            relations: ['company'],
+        });
+        const pkg = await this.benefitPackagesRepository.findOne({
+            where: { id: packageId },
+            relations: ['company'],
+        });
+        if (!pkg) throw new NotFoundException('Package not found');
+        if (!employee?.company || pkg.company.id !== employee.company.id) {
+            throw new ForbiddenException('You can only manage packages for your own company');
+        }
     }
 }

@@ -121,6 +121,7 @@ export class EmployeeDialogComponent implements OnInit {
     email: [this.data?.email ?? '', [Validators.required, Validators.email]],
     jobTitle: [this.data?.jobTitle ?? ''],
     companyId: [this.data?.company?.id ?? null, Validators.required],
+
     status: [this.data?.status ?? 'active'],
   });
 

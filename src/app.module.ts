@@ -9,7 +9,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmployeesModule } from './employees/employees.module';
 import { envValidationSchema } from './config/env.validation';
 import { BenefitPackagesModule } from './benefit-packages/benefit-packages.module';
-import { ClaimsService } from './claims/claims.service';
 import { ClaimsModule } from './claims/claims.module';
 
 @Module({
@@ -19,18 +18,19 @@ import { ClaimsModule } from './claims/claims.module';
       validationSchema: envValidationSchema,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST'),
+        host: config.get('DB_HOST'),
         port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USERNAME'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_NAME'),
+        username: config.get('DB_USERNAME'),
+        password: config.get('DB_PASSWORD'),
+        database: config.get('DB_NAME'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        synchronize: false,
+        migrationsRun: true,        // auto-run pending migrations on startup
         timezone: 'UTC',
-        autoLoadEntities: true,
-        synchronize: true,
       }),
     }),
     CompaniesModule,

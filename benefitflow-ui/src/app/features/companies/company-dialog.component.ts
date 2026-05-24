@@ -106,6 +106,7 @@ export class CompanyDialogComponent {
       name: value.name!,
       industry: value.industry!,
       employeeCount: Number(value.employeeCount),
+
     };
 
     const request$ = this.isEdit

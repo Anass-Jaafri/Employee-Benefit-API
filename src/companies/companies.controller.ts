@@ -7,6 +7,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { UserRole } from 'src/users/user.entity';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { EmployeesService } from 'src/employees/employees.service';
 
 
 @ApiTags('companies')
@@ -14,47 +16,55 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('companies')
 export class CompaniesController {
-    constructor(private readonly companiesservice: CompaniesService) { }
+
+    constructor(
+        private readonly companiesService: CompaniesService,
+
+    ) { }
 
     @ApiOperation({ summary: 'Get all companies' })
     @Get()
     getCompanies() {
-        return this.companiesservice.findAll();
+        return this.companiesService.findAll();
     }
 
     @ApiOperation({ summary: 'Get all deactivated companies' })
     @Roles(UserRole.ADMIN)
     @Get('deleted')
     getDeletedCompanies() {
-        return this.companiesservice.findDeleted();
+        return this.companiesService.findDeleted();
     }
+
+
 
     @ApiOperation({ summary: 'Get a company by id' })
     @Get(':id')
     getCompaniesById(@Param('id', ParseIntPipe) id: number) {
-        return this.companiesservice.findOne(id);
+        return this.companiesService.findOne(id);
     }
 
     @ApiOperation({ summary: 'Create a company' })
-    @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
+    @Roles(UserRole.ADMIN)
     @Post()
     createCompany(@Body() body: CreateCompanyDto) {
-        return this.companiesservice.createCompany(body);
+        return this.companiesService.createCompany(body);
     }
+
+
 
     @ApiOperation({ summary: 'Restore a deactivated company' })
     @Roles(UserRole.ADMIN)
     @Patch(':id/restore')
     restoreCompany(@Param('id', ParseIntPipe) id: number) {
-        return this.companiesservice.restoreCompany(id);
+        return this.companiesService.restoreCompany(id);
     }
 
     @ApiOperation({ summary: 'Update company details' })
-    @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
+    @Roles(UserRole.ADMIN)
     @Patch(':id')
     updateCompany(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateCompanyDto) {
 
-        return this.companiesservice.updateCompany(id, body);
+        return this.companiesService.updateCompany(id, body);
 
     }
 
@@ -62,10 +72,6 @@ export class CompaniesController {
     @Roles(UserRole.ADMIN)
     @Delete(':id')
     deleteCompany(@Param('id', ParseIntPipe) id: number) {
-        return this.companiesservice.removeCompany(id);
+        return this.companiesService.removeCompany(id);
     }
-
-
-
-
 }

@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Min } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from "class-validator";
 
 export class UpdateCompanyDto {
 
@@ -14,4 +14,6 @@ export class UpdateCompanyDto {
     @IsOptional()
     @Min(1)
     employeeCount?: number;
+
+    @IsOptional() @IsBoolean() isActive?: boolean;
 }

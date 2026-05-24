@@ -3,4 +3,5 @@ export interface Company {
     name: string;
     industry: string;
     employeeCount: number;
+    isActive: boolean;
 }

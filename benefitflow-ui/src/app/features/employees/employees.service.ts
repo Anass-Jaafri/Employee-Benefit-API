@@ -38,6 +38,14 @@ export class EmployeesService {
     );
   }
 
+  getMyCompany() {
+    return this.http.get<ApiResponse<Employee[]>>(`${this.url}/my-company`).pipe(map(r => r.data));
+  }
+
+  updateStatus(id: number, status: string) {
+    return this.http.patch<ApiResponse<Employee>>(`${this.url}/${id}`, { status }).pipe(map(r => r.data));
+  }
+
   delete(id: number) {
     return this.http.delete<ApiResponse<{ message: string }>>(`${this.url}/${id}`).pipe(
       map(res => res.data)

@@ -22,8 +22,9 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.c
     MatProgressSpinnerModule,
     MatTooltipModule,
   ],
-  template: `<div class="page-header">
-        <h2>Companies</h2>
+  template: `
+  <div class="page-header">
+        <h2 class="selection-title">Companies</h2>
         <button mat-flat-button (click)="openDialog()">
             <mat-icon>add</mat-icon>
             New Company
@@ -68,6 +69,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.c
     }
   `,
   styles: [`
+  .section-title { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
     .page-header {
       display: flex;
       justify-content: space-between;

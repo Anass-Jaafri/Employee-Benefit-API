@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './user.entity';
 import { Repository } from 'typeorm';
+import { UserResponseDto } from './dto/user-response.dto';
+import { toDto } from 'src/common/helpers/serialize';
 
 
 @Injectable()
@@ -11,13 +13,14 @@ export class UsersService {
         @InjectRepository(User) private usersRepository: Repository<User>,
     ) { }
 
-    findByEmail(email: string): Promise<User | null> {
+    async findByEmail(email: string): Promise<User | null> {
         return this.usersRepository.findOneBy({ email });
     }
 
-    create(email: string, hashedPassword: string): Promise<User> {
-        const user = this.usersRepository.create({ email, password: hashedPassword });
-        return this.usersRepository.save(user);
+    async create(email: string, hashedPassword: string): Promise<UserResponseDto> {
+        const user = await this.usersRepository.create({ email, password: hashedPassword });
+        const saved = await this.usersRepository.save(user)
+        return toDto(UserResponseDto, saved);
 
     }
 

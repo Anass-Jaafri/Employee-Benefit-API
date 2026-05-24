@@ -38,11 +38,11 @@ export class ClaimsService {
     return this.http.get<ApiResponse<Claim[]>>(this.url).pipe(map((res) => res.data));
   }
 
-  /*getOne() {
+  getMy() {
     return this.http.get<ApiResponse<Claim[]>>(`${this.url}/my-claims`).pipe(
       map(res => res.data)
     );
-  }*/
+  }
 
   create(data: CreateClaimPayload) {
     return this.http.post<ApiResponse<Claim>>(this.url, data).pipe(map((res) => res.data));

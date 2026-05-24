@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './auth.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from 'src/employees/employee.entity';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { Employee } from 'src/employees/employee.entity';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, JwtStrategy, JwtRefreshGuard],
   controllers: [AuthController],
 })
 export class AuthModule { }

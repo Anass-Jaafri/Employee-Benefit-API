@@ -10,23 +10,23 @@ import { ClaimsService } from './claims.service';
 import { Claim } from '../../shared/models';
 
 @Component({
-    selector: 'app-claim-review-dialog',
-    imports: [
-        ReactiveFormsModule,
-        MatDialogModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatSelectModule,
-        MatButtonModule,
-        MatProgressSpinnerModule,
-    ],
-    template: `
+  selector: 'app-claim-review-dialog',
+  imports: [
+    ReactiveFormsModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+  ],
+  template: `
     <h2 mat-dialog-title>Review Claim</h2>
 
     <mat-dialog-content>
       <div class="claim-summary">
         <p><strong>{{ data.title }}</strong></p>
-        <p>Employee: {{ data.employee?.firstName }} {{ data.employee?.lastName }}</p>
+        <p>Employee: {{ data.employee.firstName }} {{ data.employee.lastName }}</p>
         <p>Amount: €{{ data.amount }}</p>
         <p>Type: {{ data.claimType }}</p>
         @if (data.description) {
@@ -72,7 +72,7 @@ import { Claim } from '../../shared/models';
       </button>
     </mat-dialog-actions>
   `,
-    styles: [`
+  styles: [`
     mat-dialog-content { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
     mat-form-field { width: 100%; }
     .claim-summary {
@@ -85,37 +85,37 @@ import { Claim } from '../../shared/models';
   `],
 })
 export class ClaimReviewDialogComponent {
-    private fb = inject(FormBuilder);
-    private claimsService = inject(ClaimsService);
-    private dialogRef = inject(MatDialogRef<ClaimReviewDialogComponent>);
-    readonly data: Claim = inject(MAT_DIALOG_DATA);
+  private fb = inject(FormBuilder);
+  private claimsService = inject(ClaimsService);
+  private dialogRef = inject(MatDialogRef<ClaimReviewDialogComponent>);
+  readonly data: Claim = inject(MAT_DIALOG_DATA);
 
-    loading = signal(false);
+  loading = signal(false);
 
-    form = this.fb.group({
-        status: ['', Validators.required],
-        rejectionReason: [''],
-    });
+  form = this.fb.group({
+    status: ['', Validators.required],
+    rejectionReason: [''],
+  });
 
-    submit() {
-        const status = this.form.controls.status.value;
+  submit() {
+    const status = this.form.controls.status.value;
 
-        if (status === 'rejected' && !this.form.controls.rejectionReason.value) {
-            this.form.controls.rejectionReason.setErrors({ required: true });
-            return;
-        }
-
-        if (this.form.invalid) return;
-        this.loading.set(true);
-
-        const payload = {
-            status: status!,
-            rejectionReason: this.form.controls.rejectionReason.value ?? undefined,
-        };
-
-        this.claimsService.review(this.data.id, payload).subscribe({
-            next: () => this.dialogRef.close(true),
-            error: () => this.loading.set(false),
-        });
+    if (status === 'rejected' && !this.form.controls.rejectionReason.value) {
+      this.form.controls.rejectionReason.setErrors({ required: true });
+      return;
     }
+
+    if (this.form.invalid) return;
+    this.loading.set(true);
+
+    const payload = {
+      status: status!,
+      rejectionReason: this.form.controls.rejectionReason.value ?? undefined,
+    };
+
+    this.claimsService.review(this.data.id, payload).subscribe({
+      next: () => this.dialogRef.close(true),
+      error: () => this.loading.set(false),
+    });
+  }
 }

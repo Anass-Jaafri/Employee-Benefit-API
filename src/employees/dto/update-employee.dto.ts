@@ -1,5 +1,6 @@
 import { IsEmail, IsEnum, IsInt, IsOptional, IsString } from "class-validator";
 import { EmploymentStatus } from "../employee.entity";
+import { UserRole } from "src/users/user.entity";
 
 export class UpdateEmployeeDto {
     @IsString()
@@ -22,6 +23,9 @@ export class UpdateEmployeeDto {
     @IsOptional()
     @IsEnum(EmploymentStatus)
     status?: EmploymentStatus;
+
+    @IsEnum(UserRole)
+    role: UserRole;
 
     @IsInt()
     @IsOptional()

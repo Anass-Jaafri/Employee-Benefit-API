@@ -28,6 +28,14 @@ export class BenefitPackagesService {
     );
   }
 
+  getMyCompany() {
+    return this.http.get<ApiResponse<BenefitPackage[]>>(`${this.url}/my-company`).pipe(map(r => r.data));
+  }
+
+  setActive(id: number, isActive: boolean) {
+    return this.http.patch<ApiResponse<BenefitPackage>>(`${this.url}/${id}`, { isActive }).pipe(map(r => r.data));
+  }
+
   create(data: BenefitPackagesPayload) {
     return this.http.post<ApiResponse<BenefitPackagesPayload>>(this.url, data).pipe(
       map(res => res.data)

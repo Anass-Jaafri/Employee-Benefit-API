@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -7,6 +7,11 @@ import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { enGB } from 'date-fns/locale';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { routes } from './app.routes';
+import { AuthService } from './core/services/auth.service';
+
+function initAuth(authService: AuthService) {
+  return () => authService.init();
+}
 
 export const MY_DATE_FORMATS = {
   parse: {
@@ -29,5 +34,11 @@ export const appConfig: ApplicationConfig = {
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
     provideDateFnsAdapter(),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initAuth,
+      deps: [AuthService],
+      multi: true,
+    },
   ],
 };

@@ -22,6 +22,9 @@ export class Company {
     @DeleteDateColumn({ select: false })
     deletedAt: Date;
 
+    @Column({ default: true })
+    isActive: boolean;
+
     @OneToMany(() => Employee, (employee) => employee.company)
     employees: Employee[];
 

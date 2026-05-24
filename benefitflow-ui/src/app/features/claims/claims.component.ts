@@ -32,8 +32,8 @@ import { ClaimReviewDialogComponent } from './claim-review-dialog.component';
         <div class="spinner-container">
             <mat-spinner diameter = "48"/>
         </div>
-    }  
-        <!--@else if (isEmployee()) {
+    }
+    @else if (isEmployee() || isHrManager()) {
           <div class="page-header">
         <h2>Claims</h2>
             <button mat-flat-button (click)="openSubmitDialog()">
@@ -41,64 +41,6 @@ import { ClaimReviewDialogComponent } from './claim-review-dialog.component';
                 Submit Claim
             </button>
           </div>
-            <table mat-table [dataSource]="myClaims()">
-            <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>Title</th>
-                <td mat-cell *matCellDef="let c">{{c.title}}</td>
-            </ng-container>
-          <ng-container matColumnDef="employee">
-          <th mat-header-cell *matHeaderCellDef>Employee</th>
-          <td mat-cell *matCellDef="let c">
-            {{ c.employee?.firstName }} {{ c.employee?.lastName }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="package">
-          <th mat-header-cell *matHeaderCellDef>Package</th>
-          <td mat-cell *matCellDef="let c">{{ c.benefitPackage?.name }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="amount">
-          <th mat-header-cell *matHeaderCellDef>Amount</th>
-          <td mat-cell *matCellDef="let c">€{{ c.amount }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef>Type</th>
-          <td mat-cell *matCellDef="let c">{{ typeLabel(c.claimType) }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let c">
-            <mat-chip [class]="'status-' + c.status">
-              {{ statusLabel(c.status) }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="date">
-          <th mat-header-cell *matHeaderCellDef>Submitted</th>
-          <td mat-cell *matCellDef="let c">{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let c">
-            @if (canReview() && c.status === 'pending') {
-              <button mat-icon-button matTooltip="Review" (click)="openReviewDialog(c)">
-                <mat-icon>rate_review</mat-icon>
-              </button>
-            }
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-
-      </table>
-  }-->
-    @else {
         <table mat-table [dataSource]="claims()">
             <ng-container matColumnDef="title">
                 <th mat-header-cell *matHeaderCellDef>Title</th>
@@ -176,6 +118,7 @@ import { ClaimReviewDialogComponent } from './claim-review-dialog.component';
 export class ClaimsComponent {
   private claimsService = inject(ClaimsService);
   private authService = inject(AuthService);
+  private currentUser = this.authService.currentUser;
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -184,7 +127,8 @@ export class ClaimsComponent {
   loading = signal(true);
   columns = ['title', 'employee', 'package', 'amount', 'type', 'status', 'date', 'actions'];
 
-  readonly isEmployee = computed(() => this.authService.currentUser()?.role === 'employee');
+  readonly isHrManager = computed(() => this.currentUser()?.role === 'hr_manager');
+  readonly isEmployee = computed(() => this.currentUser()?.role === 'employee');
   readonly canReview = computed(() => {
     const role = this.authService.currentUser()?.role;
     return role === 'admin' || role === 'hr_manager';
@@ -212,15 +156,25 @@ export class ClaimsComponent {
 
   load() {
     this.loading.set(true);
-    this.claimsService.getAll().subscribe({
-      next: (data) => { this.claims.set(data); this.loading.set(false); },
-      error: () => { this.snackBar.open('Failed to load claims', 'Close', { duration: 3000 }); this.loading.set(false); },
+    this.isEmployee() ? this.claimsService.getMy().subscribe({
+      next: (data) => {
+        this.claims.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.snackBar.open('Failed to load claims', 'Close', { duration: 3000 });
+        this.loading.set(false);
+      }
+    }) : this.claimsService.getAll().subscribe({
+      next: (data) => {
+        this.claims.set(data);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.snackBar.open('Failed to load claims', 'Close', { duration: 3000 });
+        this.loading.set(false);
+      }
     });
-
-    /*this.claimsService.getOne().subscribe({
-      next: (data) => { this.myClaims.set(data); this.loading.set(false); },
-      error: () => { this.snackBar.open('Failed to load claims', 'Close', { duration: 3000 }); this.loading.set(false); },
-    })*/
   }
 
   openSubmitDialog() {

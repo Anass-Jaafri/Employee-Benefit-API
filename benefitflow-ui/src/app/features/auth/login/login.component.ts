@@ -155,7 +155,7 @@ export class LoginComponent {
     const { email, password } = this.form.value;
 
     this.authService.login(email!, password!).subscribe({
-      next: () => this.router.navigate(['/dashboard/companies']),
+      next: () => this.router.navigate(['/dashboard/home']),
       error: (err) => {
         this.error.set(err.error?.message ?? 'Something went wrong. Please try again.');
         this.loading.set(false);
