@@ -18,13 +18,13 @@ import { Claim } from '../../../shared/models/claim.model';
 import { BenefitPackage } from '../../../shared/models/benefit-package.model';
 
 @Component({
-    selector: 'app-employee-dashboard',
-    imports: [
-        RouterLink, CurrencyPipe, TitleCasePipe, StatCardComponent,
-        MatCardModule, MatTableModule, MatButtonModule, MatIconModule,
-        MatFormFieldModule, MatSelectModule, MatChipsModule, MatProgressSpinnerModule,
-    ],
-    template: `
+  selector: 'app-employee-dashboard',
+  imports: [
+    RouterLink, CurrencyPipe, TitleCasePipe, StatCardComponent,
+    MatCardModule, MatTableModule, MatButtonModule, MatIconModule,
+    MatFormFieldModule, MatSelectModule, MatChipsModule, MatProgressSpinnerModule,
+  ],
+  template: `
     <div class="dashboard-wrapper">
 
       @if (loading()) {
@@ -138,7 +138,7 @@ import { BenefitPackage } from '../../../shared/models/benefit-package.model';
       }
     </div>
   `,
-    styles: [`
+  styles: [`
     .dashboard-wrapper { padding: 24px; max-width: 1400px; margin: 0 auto; }
     .loading-center    { display: flex; justify-content: center; padding: 80px; }
     .section-title     { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
@@ -177,41 +177,41 @@ import { BenefitPackage } from '../../../shared/models/benefit-package.model';
   `],
 })
 export class EmployeeDashboardComponent implements OnInit {
-    private claimsService = inject(ClaimsService);
-    private packagesService = inject(BenefitPackagesService);
+  private claimsService = inject(ClaimsService);
+  private packagesService = inject(BenefitPackagesService);
 
-    loading = signal(true);
-    claims = signal<Claim[]>([]);
-    packages = signal<BenefitPackage[]>([]);
+  loading = signal(true);
+  claims = signal<Claim[]>([]);
+  packages = signal<BenefitPackage[]>([]);
 
-    claimFilter = signal<string>('all');
+  claimFilter = signal<string>('all');
 
-    readonly claimColumns = ['title', 'amount', 'package', 'status'];
+  readonly claimColumns = ['title', 'amount', 'package', 'status'];
 
-    readonly counts = computed(() => ({
-        pending: this.claims().filter(c => c.status === 'pending').length,
-        approved: this.claims().filter(c => c.status === 'approved').length,
-        rejected: this.claims().filter(c => c.status === 'rejected').length,
-        paid: this.claims().filter(c => c.status === 'paid').length,
-    }));
+  readonly counts = computed(() => ({
+    pending: this.claims().filter(c => c.status === 'pending').length,
+    approved: this.claims().filter(c => c.status === 'approved').length,
+    rejected: this.claims().filter(c => c.status === 'rejected').length,
+    paid: this.claims().filter(c => c.status === 'paid').length,
+  }));
 
-    readonly filteredClaims = computed(() => {
-        const filter = this.claimFilter();
-        if (filter === 'all') return this.claims();
-        return this.claims().filter(c => c.status === filter);
+  readonly filteredClaims = computed(() => {
+    const filter = this.claimFilter();
+    if (filter === 'all') return this.claims();
+    return this.claims().filter(c => c.status === filter);
+  });
+
+  ngOnInit(): void {
+    forkJoin({
+      claims: this.claimsService.getMy(),
+      packages: this.packagesService.getMyBenefit(),
+    }).subscribe({
+      next: ({ claims, packages }) => {
+        this.claims.set(claims);
+        this.packages.set(packages);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
-
-    ngOnInit(): void {
-        forkJoin({
-            claims: this.claimsService.getMy(),
-            packages: this.packagesService.getMyCompany(),
-        }).subscribe({
-            next: ({ claims, packages }) => {
-                this.claims.set(claims);
-                this.packages.set(packages);
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false),
-        });
-    }
+  }
 }

@@ -1,14 +1,15 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'src/users/user.entity';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { EmployeesService } from 'src/employees/employees.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 
 @ApiTags('companies')
@@ -24,9 +25,11 @@ export class CompaniesController {
 
     @ApiOperation({ summary: 'Get all companies' })
     @Get()
-    getCompanies() {
-        return this.companiesService.findAll();
+    getCompanies(@Query() pagination: PaginationDto) {
+        return this.companiesService.findAll(pagination);
     }
+
+
 
     @ApiOperation({ summary: 'Get all deactivated companies' })
     @Roles(UserRole.ADMIN)

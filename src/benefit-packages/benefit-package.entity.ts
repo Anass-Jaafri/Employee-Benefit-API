@@ -1,7 +1,7 @@
-import { Claim } from "src/claims/claim.entity";
-import { decimalTransformer } from "src/common/transformers/decimal.transformer";
-import { Company } from "src/companies/companies.entity";
-import { Employee } from "src/employees/employee.entity";
+import { Claim } from "../claims/claim.entity";
+import { decimalTransformer } from "../common/transformers/decimal.transformer";
+import { Company } from "../companies/companies.entity";
+import { Employee } from "../employees/employee.entity";
 import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 export enum PerkType {

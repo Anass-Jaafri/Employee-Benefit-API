@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,10 +6,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { switchMap, of } from 'rxjs';
+
 import { EmployeesService } from './employees.service';
 import { CompaniesService } from '../companies/companies.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Employee, Company } from '../../shared/models';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { UserRole } from '../../shared/models/user.model';
+import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.validator';
 
 @Component({
   selector: 'app-employee-dialog',
@@ -27,13 +32,17 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
     <mat-dialog-content>
       <form [formGroup]="form" id="employee-form" (ngSubmit)="submit()">
-
         <div class="row">
           <mat-form-field appearance="outline">
             <mat-label>First name</mat-label>
             <input matInput formControlName="firstName" />
             @if (form.controls.firstName.hasError('required')) {
               <mat-error>Required</mat-error>
+            }
+            @if (
+              form.controls.firstName.hasError('whitespace') && form.controls.firstName.touched
+            ) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
             }
           </mat-form-field>
 
@@ -42,6 +51,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
             <input matInput formControlName="lastName" />
             @if (form.controls.lastName.hasError('required')) {
               <mat-error>Required</mat-error>
+            }
+            @if (form.controls.lastName.hasError('whitespace') && form.controls.lastName.touched) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
             }
           </mat-form-field>
         </div>
@@ -55,6 +67,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
           @if (form.controls.email.hasError('email')) {
             <mat-error>Enter a valid email</mat-error>
           }
+          @if (form.controls.email.hasError('whitespace') && form.controls.email.touched) {
+            <mat-error>Cannot be blank or spaces only</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline">
@@ -62,17 +77,20 @@ import { MatSnackBar } from '@angular/material/snack-bar';
           <input matInput formControlName="jobTitle" />
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Company</mat-label>
-          <mat-select formControlName="companyId">
-            @for (company of companies(); track company.id) {
-              <mat-option [value]="company.id">{{ company.name }}</mat-option>
+        <!-- Company selector — admin only. HR manager always assigns to their own company. -->
+        @if (isAdmin()) {
+          <mat-form-field appearance="outline">
+            <mat-label>Company</mat-label>
+            <mat-select formControlName="companyId">
+              @for (company of companies(); track company.id) {
+                <mat-option [value]="company.id">{{ company.name }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.companyId.hasError('required')) {
+              <mat-error>Required</mat-error>
             }
-          </mat-select>
-          @if (form.controls.companyId.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-        </mat-form-field>
+          </mat-form-field>
+        }
 
         <mat-form-field appearance="outline">
           <mat-label>Status</mat-label>
@@ -83,12 +101,26 @@ import { MatSnackBar } from '@angular/material/snack-bar';
           </mat-select>
         </mat-form-field>
 
+        <!-- Role selector — only shown when editing an employee that has a linked user.
+             Admin sees all three roles. HR manager sees employee and hr_manager only. -->
+        @if (isEdit && data?.user) {
+          <mat-form-field appearance="outline">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option value="employee">Employee</mat-option>
+              <mat-option value="hr_manager">HR Manager</mat-option>
+              @if (isAdmin()) {
+                <mat-option value="admin">Admin</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
       </form>
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-flat-button type="submit" form ="employee-form" [disabled]="loading()">
+      <button mat-flat-button type="submit" form="employee-form" [disabled]="loading()">
         @if (loading()) {
           <mat-spinner diameter="20" />
         } @else {
@@ -97,68 +129,116 @@ import { MatSnackBar } from '@angular/material/snack-bar';
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
-    mat-form-field { width: 100%; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  `],
+  styles: [
+    `
+      mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+    `,
+  ],
 })
 export class EmployeeDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private employeesService = inject(EmployeesService);
   private companiesService = inject(CompaniesService);
+  private authService = inject(AuthService);
   private dialogRef = inject(MatDialogRef<EmployeeDialogComponent>);
-  private data: Employee | null = inject(MAT_DIALOG_DATA);
   private snackBar = inject(MatSnackBar);
+
+  // Public so the template can access data?.user
+  data: Employee | null = inject(MAT_DIALOG_DATA);
 
   loading = signal(false);
   companies = signal<Company[]>([]);
   isEdit = !!this.data;
 
+  readonly isAdmin = computed(() => this.authService.currentUser()?.role === 'admin');
+  readonly isHrManager = computed(() => this.authService.currentUser()?.role === 'hr_manager');
   form = this.fb.group({
-    firstName: [this.data?.firstName ?? '', Validators.required],
-    lastName: [this.data?.lastName ?? '', Validators.required],
-    email: [this.data?.email ?? '', [Validators.required, Validators.email]],
-    jobTitle: [this.data?.jobTitle ?? ''],
-    companyId: [this.data?.company?.id ?? null, Validators.required],
-
+    firstName: [this.data?.firstName ?? '', [Validators.required, noWhitespaceValidator]],
+    lastName: [this.data?.lastName ?? '', [Validators.required, noWhitespaceValidator]],
+    email: [this.data?.email ?? '', [Validators.required, Validators.email, noWhitespaceValidator]],
+    jobTitle: [this.data?.jobTitle ?? '', noWhitespaceValidator],
+    companyId: [this.data?.company?.id ?? (null as number | null), Validators.required],
     status: [this.data?.status ?? 'active'],
+    // Role is only used when editing — initialised from the linked user.
+    role: [this.data?.user?.role ?? (null as UserRole | null)],
   });
 
   ngOnInit() {
     this.companiesService.getAll().subscribe({
-      next: (data) => this.companies.set(data),
+      next: (data) => this.companies.set(data.items),
     });
+
+    // HR manager: lock companyId to their own company — they can't reassign.
+    if (this.isHrManager()) {
+      this.form.controls.companyId.disable();
+    }
+
+    const currentUserId = this.authService.currentUser()?.id;
+    if (this.isEdit && this.data?.user?.id === currentUserId) {
+      this.form.controls.role.disable();
+    }
   }
 
   submit() {
     if (this.form.invalid) return;
     this.loading.set(true);
 
-    const value = this.form.value;
-    const payload = {
+    const value = this.form.getRawValue(); // getRawValue includes disabled controls
+
+    const employeePayload = {
       firstName: value.firstName!,
       lastName: value.lastName!,
       email: value.email!,
-      jobTitle: value.jobTitle ?? undefined,
+      jobTitle: value.jobTitle || undefined,
       companyId: Number(value.companyId),
       status: value.status ?? undefined,
     };
 
-    const request$ = this.isEdit
-      ? this.employeesService.update(this.data!.id, payload)
-      : this.employeesService.create(payload);
+    const employeeRequest$ = this.isEdit
+      ? this.employeesService.update(this.data!.id, employeePayload)
+      : this.employeesService.create(employeePayload);
 
-    request$.subscribe({
-      next: () => this.dialogRef.close(true),
-      error: (err) => {
-        this.snackBar.open(
-          err.error?.message ?? 'Something went wrong',
-          'Close',
-          { duration: 3000 }
-        );
-        this.loading.set(false);
-      },
-    });
+    employeeRequest$
+      .pipe(
+        switchMap(() => {
+          // Only fire the role update when:
+          //   - editing an existing employee
+          //   - the employee has a linked user
+          //   - the role actually changed
+          const newRole = value.role as UserRole | null;
+          const currentRole = this.data?.user?.role;
+          const userId = this.data?.user?.id;
+
+          if (!this.isEdit || !userId || !newRole || newRole === currentRole) {
+            return of(null); // nothing to do
+          }
+
+          return this.isAdmin()
+            ? this.employeesService.updateUserRole(userId, newRole) // admin → /users/:id/role
+            : this.employeesService.updateRole(this.data!.id, newRole as 'employee' | 'hr_manager'); // HR → /employees/:id/role
+        }),
+      )
+      .subscribe({
+        next: () => this.dialogRef.close(true),
+        error: (err) => {
+          this.snackBar.open(err.error?.message ?? 'Something went wrong', 'Close', {
+            duration: 3000,
+          });
+          this.loading.set(false);
+        },
+      });
   }
 }

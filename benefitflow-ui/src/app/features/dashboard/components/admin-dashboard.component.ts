@@ -16,6 +16,7 @@ import { CompaniesService } from '../../companies/companies.service';
 import { EmployeesService } from '../../employees/employees.service';
 import { ClaimsService } from '../../claims/claims.service';
 import { Company } from '../../../shared/models/company.model';
+import { MatChipsModule } from '@angular/material/chips';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -23,24 +24,24 @@ import { Company } from '../../../shared/models/company.model';
     RouterLink, StatCardComponent,
     MatCardModule, MatTableModule, MatButtonModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatSlideToggleModule, MatProgressSpinnerModule,
+    MatChipsModule, MatProgressSpinnerModule,
   ],
   template: `
     <div class="dashboard-wrapper">
-
+ 
       @if (loading()) {
         <div class="loading-center"><mat-spinner diameter="48" /></div>
       } @else {
-
+ 
         <h2 class="section-title">Overview</h2>
-
+ 
         <div class="stats-grid">
-          <app-stat-card icon="business"        [value]="totalCompanies()"  label="Total Companies"  color="blue"   />
-          <app-stat-card icon="check_circle"    [value]="activeCompanies()" label="Active Companies" color="green"  />
-          <app-stat-card icon="people"          [value]="employeeCount()"   label="Total Employees"  color="purple" />
-          <app-stat-card icon="pending_actions" [value]="pendingClaimCount()" label="Pending Claims" color="orange" />
+          <app-stat-card icon="business"        [value]="totalCompanies()"    label="Total Companies"  color="blue"   />
+          <app-stat-card icon="check_circle"    [value]="activeCompanies()"   label="Active Companies" color="green"  />
+          <app-stat-card icon="people"          [value]="employeeCount()"     label="Total Employees"  color="purple" />
+          <app-stat-card icon="pending_actions" [value]="pendingClaimCount()" label="Pending Claims"   color="orange" />
         </div>
-
+ 
         <mat-card>
           <mat-card-header>
             <mat-card-title>Companies</mat-card-title>
@@ -49,7 +50,7 @@ import { Company } from '../../../shared/models/company.model';
               Manage <mat-icon>arrow_forward</mat-icon>
             </a>
           </mat-card-header>
-
+ 
           <mat-card-content>
             <div class="table-controls">
               <mat-form-field appearance="outline" class="search-field">
@@ -57,7 +58,7 @@ import { Company } from '../../../shared/models/company.model';
                 <mat-icon matPrefix>search</mat-icon>
                 <input matInput (input)="companySearch.set($any($event.target).value)" />
               </mat-form-field>
-
+ 
               <mat-form-field appearance="outline" class="filter-field">
                 <mat-label>Status</mat-label>
                 <mat-select [value]="companyStatusFilter()"
@@ -68,32 +69,32 @@ import { Company } from '../../../shared/models/company.model';
                 </mat-select>
               </mat-form-field>
             </div>
-
+ 
             <table mat-table [dataSource]="filteredCompanies()" class="full-width">
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Company</th>
                 <td mat-cell *matCellDef="let c">{{ c.name }}</td>
               </ng-container>
-
+ 
               <ng-container matColumnDef="industry">
                 <th mat-header-cell *matHeaderCellDef>Industry</th>
                 <td mat-cell *matCellDef="let c">{{ c.industry }}</td>
               </ng-container>
-
+ 
               <ng-container matColumnDef="employeeCount">
                 <th mat-header-cell *matHeaderCellDef>Employees</th>
                 <td mat-cell *matCellDef="let c">{{ c.employeeCount }}</td>
               </ng-container>
-
+ 
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Active</th>
+                <th mat-header-cell *matHeaderCellDef>Status</th>
                 <td mat-cell *matCellDef="let c">
-                  <mat-slide-toggle [checked]="c.isActive"
-                                    (change)="toggleCompany(c)"
-                                    color="primary" />
+                  <mat-chip [class]="c.isActive ? 'status-active' : 'status-inactive'">
+                    {{ c.isActive ? 'Active' : 'Inactive' }}
+                  </mat-chip>
                 </td>
               </ng-container>
-
+ 
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;"></tr>
               <tr class="mat-row" *matNoDataRow>
@@ -123,6 +124,8 @@ import { Company } from '../../../shared/models/company.model';
     .filter-field       { width: 180px; }
     .full-width         { width: 100%; }
     .no-data            { padding: 24px; text-align: center; color: rgba(0,0,0,0.4); }
+    .status-active   { --mdc-chip-label-text-color: #2e7d32; background: #e8f5e9 !important; }
+    .status-inactive { --mdc-chip-label-text-color: #c62828; background: #ffebee !important; }
   `],
 })
 export class AdminDashboardComponent implements OnInit {
@@ -160,9 +163,9 @@ export class AdminDashboardComponent implements OnInit {
       claims: this.claimsService.getAll(),
     }).subscribe({
       next: ({ companies, employees, claims }) => {
-        this.companies.set(companies);
-        this.employeeCount.set(employees.length);
-        this.pendingClaimCount.set(claims.filter(c => c.status === 'pending').length);
+        this.companies.set(companies.items);
+        this.employeeCount.set(employees.meta.total);
+        this.pendingClaimCount.set(claims.items.filter(c => c.status === 'pending').length);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),

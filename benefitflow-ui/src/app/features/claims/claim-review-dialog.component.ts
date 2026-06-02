@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ClaimsService } from './claims.service';
 import { Claim } from '../../shared/models';
+import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.validator';
 
 @Component({
   selector: 'app-claim-review-dialog',
@@ -25,7 +26,9 @@ import { Claim } from '../../shared/models';
 
     <mat-dialog-content>
       <div class="claim-summary">
-        <p><strong>{{ data.title }}</strong></p>
+        <p>
+          <strong>{{ data.title }}</strong>
+        </p>
         <p>Employee: {{ data.employee.firstName }} {{ data.employee.lastName }}</p>
         <p>Amount: €{{ data.amount }}</p>
         <p>Type: {{ data.claimType }}</p>
@@ -35,7 +38,6 @@ import { Claim } from '../../shared/models';
       </div>
 
       <form [formGroup]="form">
-
         <mat-form-field appearance="outline">
           <mat-label>Decision</mat-label>
           <mat-select formControlName="status">
@@ -55,9 +57,14 @@ import { Claim } from '../../shared/models';
             @if (form.controls.rejectionReason.hasError('required')) {
               <mat-error>Rejection reason is required</mat-error>
             }
+            @if (
+              form.controls.rejectionReason.hasError('whitespace') &&
+              form.controls.rejectionReason.touched
+            ) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
+            }
           </mat-form-field>
         }
-
       </form>
     </mat-dialog-content>
 
@@ -72,17 +79,29 @@ import { Claim } from '../../shared/models';
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
-    mat-form-field { width: 100%; }
-    .claim-summary {
-      background: var(--mat-sys-surface-variant);
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-    }
-    .claim-summary p { margin: 4px 0; font-size: 14px; }
-  `],
+  styles: [
+    `
+      mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+      .claim-summary {
+        background: var(--mat-sys-surface-variant);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+      }
+      .claim-summary p {
+        margin: 4px 0;
+        font-size: 14px;
+      }
+    `,
+  ],
 })
 export class ClaimReviewDialogComponent {
   private fb = inject(FormBuilder);
@@ -94,7 +113,7 @@ export class ClaimReviewDialogComponent {
 
   form = this.fb.group({
     status: ['', Validators.required],
-    rejectionReason: [''],
+    rejectionReason: ['', noWhitespaceValidator],
   });
 
   submit() {

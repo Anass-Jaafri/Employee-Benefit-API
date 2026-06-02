@@ -7,11 +7,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './auth.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from 'src/employees/employee.entity';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
+import { Company } from 'src/companies/companies.entity';
+import { JwtRefreshStrategy } from './jwt-refresh.strategy';
+import { User } from 'src/users/user.entity';
 
 @Module({
   imports: [
     UsersModule,
+    TypeOrmModule.forFeature([Employee, Company, User]), UsersModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -22,7 +26,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtStrategy, JwtRefreshGuard],
+  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, JwtRefreshGuard],
   controllers: [AuthController],
 })
 export class AuthModule { }

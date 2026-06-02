@@ -2,14 +2,15 @@ import { Body, Controller, Get, Patch, Post, Res, UseGuards } from '@nestjs/comm
 import { RegisterUserDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login.dto';
-import { CurrentUser } from './decorators/current-user.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import type { Response } from 'express';
-import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
+import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
 import { UserRole } from 'src/users/user.entity';
+import { LoginThrottle, RegisterThrottle } from 'src/common/decorators/throttle.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -49,6 +50,7 @@ export class AuthController {
 
     @ApiOperation({ summary: 'Register a new user' })
     @Post('/register')
+    @RegisterThrottle()
     registerUser(@Body() body: RegisterUserDto) {
 
         return this.authService.register(body);
@@ -57,6 +59,7 @@ export class AuthController {
 
     @ApiOperation({ summary: 'User login' })
     @Post('/login')
+    @LoginThrottle()
     async loginUser(@Body() body: LoginUserDto, @Res({ passthrough: true }) res: Response) {
 
         const { accessToken, refreshToken, user } = await this.authService.login(body);

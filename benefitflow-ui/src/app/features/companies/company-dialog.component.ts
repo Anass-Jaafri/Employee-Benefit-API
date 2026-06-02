@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { signal } from '@angular/core';
 import { CompaniesService } from './companies.service';
 import { Company } from '../../shared/models';
+import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.validator';
 
 @Component({
   selector: 'app-company-dialog',
@@ -24,12 +25,14 @@ import { Company } from '../../shared/models';
 
     <mat-dialog-content>
       <form [formGroup]="form" id="company-form" (ngSubmit)="submit()">
-
         <mat-form-field appearance="outline">
           <mat-label>Company name</mat-label>
           <input matInput formControlName="name" />
           @if (form.controls.name.hasError('required')) {
             <mat-error>Name is required</mat-error>
+          }
+          @if (form.controls.name.hasError('whitespace') && form.controls.name.touched) {
+            <mat-error>Cannot be blank or spaces only</mat-error>
           }
         </mat-form-field>
 
@@ -38,6 +41,9 @@ import { Company } from '../../shared/models';
           <input matInput formControlName="industry" />
           @if (form.controls.industry.hasError('required')) {
             <mat-error>Industry is required</mat-error>
+          }
+          @if (form.controls.industry.hasError('whitespace') && form.controls.industry.touched) {
+            <mat-error>Cannot be blank or spaces only</mat-error>
           }
         </mat-form-field>
 
@@ -51,17 +57,12 @@ import { Company } from '../../shared/models';
             <mat-error>Must be at least 1</mat-error>
           }
         </mat-form-field>
-
       </form>
     </mat-dialog-content>
 
-   <mat-dialog-actions align="end">
+    <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancel</button>
-      <button
-        mat-flat-button
-        type="submit"
-        form="company-form"
-        [disabled]="loading()">
+      <button mat-flat-button type="submit" form="company-form" [disabled]="loading()">
         @if (loading()) {
           <mat-spinner diameter="20" />
         } @else {
@@ -70,17 +71,19 @@ import { Company } from '../../shared/models';
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    mat-dialog-content {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-top: 8px;
-    }
-    mat-form-field {
-      width: 100%;
-    }
-  `],
+  styles: [
+    `
+      mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class CompanyDialogComponent {
   private fb = inject(FormBuilder);
@@ -92,8 +95,8 @@ export class CompanyDialogComponent {
   isEdit = !!this.data;
 
   form = this.fb.group({
-    name: [this.data?.name ?? '', Validators.required],
-    industry: [this.data?.industry ?? '', Validators.required],
+    name: [this.data?.name ?? '', [Validators.required, noWhitespaceValidator]],
+    industry: [this.data?.industry ?? '', [Validators.required, noWhitespaceValidator]],
     employeeCount: [this.data?.employeeCount ?? null, [Validators.required, Validators.min(1)]],
   });
 
@@ -106,7 +109,6 @@ export class CompanyDialogComponent {
       name: value.name!,
       industry: value.industry!,
       employeeCount: Number(value.employeeCount),
-
     };
 
     const request$ = this.isEdit

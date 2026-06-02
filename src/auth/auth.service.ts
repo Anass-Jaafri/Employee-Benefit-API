@@ -18,6 +18,7 @@ import { ProfileResponseDto } from './dto/profile-response.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { toDto, toDtoArray } from 'src/common/helpers/serialize';
 import { ConfigService } from '@nestjs/config';
+import { Company } from 'src/companies/companies.entity';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +27,11 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
         private dataSource: DataSource,
-        private config: ConfigService
+        private config: ConfigService,
+
+        @InjectRepository(Company) private companiesRepository: Repository<Company>,
+        @InjectRepository(User) private usersRepository: Repository<User>,
+        @InjectRepository(Employee) private employeesRepository: Repository<Employee>
     ) { }
 
     async register(data: RegisterUserDto) {
@@ -34,9 +39,18 @@ export class AuthService {
         const existing = await this.usersService.findByEmail(data.email);
         if (existing) throw new ConflictException('Email already in use');
 
-        // Hash password
-        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const emailDomain = data.email.split('@')[1]?.toLowerCase();
+        let assignedCompany: Company | null = null;
+
+        if (emailDomain) {
+            assignedCompany = await this.companiesRepository.findOne({
+                where: { domain: emailDomain, isActive: true },
+            });
+            // No match employee stays unassigned.
+        }
         return this.dataSource.transaction(async (manager) => {
+            const hashedPassword = await bcrypt.hash(data.password, 10);
+
             const user = manager.create(User, {
                 email: data.email,
                 password: hashedPassword,
@@ -47,6 +61,7 @@ export class AuthService {
                 lastName: data.lastName,
                 email: data.email,
                 user,
+                company: assignedCompany ?? undefined,
             });
             await manager.save(employee);
             return { message: 'User registered successfully', userId: user.id };
@@ -72,68 +87,56 @@ export class AuthService {
         };
     }
 
-    async getProfile(userId: number): Promise<ProfileResponseDto> {
-        const employee = await this.dataSource
-            .getRepository(Employee)
-            .findOne({
-                where: { user: { id: userId } },
-                relations: ['user', 'company'],
-            });
+    async getProfile(userId: number) {
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
 
-        if (!employee) throw new NotFoundException('Profile not found');
+        // Employee record is optional — admin users have no employee record.
+        const employee = await this.employeesRepository.findOne({
+            where: { user: { id: userId } },
+            relations: ['company'],
+        });
 
-        // flatten user fields onto the employee for serialization
-        const profile = {
-            id: employee.user.id,
-            email: employee.user.email,
-            role: employee.user.role,
-            firstName: employee.firstName,
-            lastName: employee.lastName,
-            jobTitle: employee.jobTitle,
-            status: employee.status,
-            company: employee.company ?? null,
-        };
-
-        return toDto(ProfileResponseDto, profile);
+        // Construct the profile object — employee fields are null for admin.
+        return toDto(ProfileResponseDto, {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            firstName: employee?.firstName ?? null,
+            lastName: employee?.lastName ?? null,
+            jobTitle: employee?.jobTitle ?? null,
+            companyId: employee?.company?.id ?? null,
+        });
     }
 
-    async updateProfile(userId: number, data: UpdateProfileDto): Promise<ProfileResponseDto> {
+    async updateProfile(userId: number, dto: UpdateProfileDto) {
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const employee = await this.employeesRepository.findOne({
+            where: { user: { id: userId } },
+        });
+
+        // Check email uniqueness if changing it
+        if (dto.email && dto.email !== user.email) {
+            const existing = await this.usersRepository.findOne({ where: { email: dto.email } });
+            if (existing) throw new ConflictException('Email already in use');
+        }
+
         return this.dataSource.transaction(async (manager) => {
-            const employee = await manager.findOne(Employee, {
-                where: { user: { id: userId } },
-                relations: ['user', 'company'],
-            });
+            if (dto.email) user.email = dto.email;
+            await manager.save(user);
 
-            if (!employee) throw new NotFoundException('Profile not found');
-
-            // update employee fields
-            if (data.firstName) employee.firstName = data.firstName;
-            if (data.lastName) employee.lastName = data.lastName;
-            if (data.jobTitle !== undefined) employee.jobTitle = data.jobTitle;
-
-            // email must stay in sync on both entities
-            if (data.email && data.email !== employee.user.email) {
-                const existing = await manager.findOneBy(User, { email: data.email });
-                if (existing) throw new ConflictException('Email already in use');
-                employee.user.email = data.email;
-                employee.email = data.email;
-                await manager.save(User, employee.user);
+            // Employee fields only apply when an employee record exists
+            if (employee) {
+                if (dto.firstName !== undefined) employee.firstName = dto.firstName;
+                if (dto.lastName !== undefined) employee.lastName = dto.lastName;
+                if (dto.email !== undefined) employee.email = dto.email;
+                if (dto.jobTitle !== undefined) employee.jobTitle = dto.jobTitle;
+                await manager.save(employee);
             }
 
-            await manager.save(Employee, employee);
-
-            const profile = {
-                id: employee.user.id,
-                email: employee.user.email,
-                role: employee.user.role,
-                firstName: employee.firstName,
-                lastName: employee.lastName,
-                jobTitle: employee.jobTitle,
-                status: employee.status,
-                company: employee.company ?? null,
-            };
-
-            return toDto(ProfileResponseDto, profile);
+            return this.getProfile(userId);
         });
     }
 

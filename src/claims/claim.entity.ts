@@ -1,7 +1,7 @@
-import { BenefitPackage } from "src/benefit-packages/benefit-package.entity";
+import { BenefitPackage } from "../benefit-packages/benefit-package.entity";
 import { decimalTransformer } from "src/common/transformers/decimal.transformer";
-import { Employee } from "src/employees/employee.entity";
-import { User } from "src/users/user.entity";
+import { Employee } from "../employees/employee.entity";
+import { User } from "../users/user.entity";
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 export enum ClaimStatus {

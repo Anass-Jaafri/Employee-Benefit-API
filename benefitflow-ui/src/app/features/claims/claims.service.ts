@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { ApiResponse, Claim } from '../../shared/models';
+import { ApiResponse, Claim, PaginatedData, PaginatedResponse } from '../../shared/models';
 import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 export interface CreateClaimPayload {
   title: string;
@@ -34,14 +35,35 @@ export class ClaimsService {
   private http = inject(HttpClient);
   private url = `${environment.apiUrl}/claims`;
 
-  getAll() {
-    return this.http.get<ApiResponse<Claim[]>>(this.url).pipe(map((res) => res.data));
+  getAll(
+    page = 1,
+    limit = 20,
+    filters: Record<string, string> = {},
+  ): Observable<PaginatedData<Claim>> {
+    let params = new HttpParams().set('page', page).set('limit', limit);
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params = params.set(key, value);
+    });
+
+    return this.http
+      .get<ApiResponse<PaginatedData<Claim>>>(this.url, { params })
+      .pipe(map((r) => r.data));
   }
 
-  getMy() {
-    return this.http.get<ApiResponse<Claim[]>>(`${this.url}/my-claims`).pipe(
-      map(res => res.data)
-    );
+  getMyCompany(filters: Record<string, string> = {}): Observable<Claim[]> {
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params = params.set(key, value);
+    });
+
+    return this.http
+      .get<ApiResponse<Claim[]>>(`${this.url}/my-company-claims`, { params })
+      .pipe(map((r) => r.data));
+  }
+
+  getMy(): Observable<Claim[]> {
+    return this.http.get<ApiResponse<Claim[]>>(`${this.url}/my-claims`).pipe(map((r) => r.data));
   }
 
   create(data: CreateClaimPayload) {

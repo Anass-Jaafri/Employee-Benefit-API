@@ -9,12 +9,16 @@ import {
     Min,
 } from 'class-validator';
 import { PerkType } from '../benefit-package.entity';
+import { StripHtml } from 'src/common/decorators/strip-html.decorator';
 
 export class UpdateBenefitPackageDto {
+
+    @StripHtml()
     @IsOptional()
     @IsString()
     name?: string;
 
+    @StripHtml()
     @IsOptional()
     @IsString()
     description?: string;
@@ -29,6 +33,7 @@ export class UpdateBenefitPackageDto {
     perks?: PerkType[];
 
     @IsOptional()
+    @StripHtml()
     @IsNumber()
     @Min(0)
     maxBenefitAmount?: number;

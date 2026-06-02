@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -8,6 +8,7 @@ import { enGB } from 'date-fns/locale';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { routes } from './app.routes';
 import { AuthService } from './core/services/auth.service';
+import { GlobalErrorHandler } from './core/handlers/global-error.handler';
 
 function initAuth(authService: AuthService) {
   return () => authService.init();
@@ -31,6 +32,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },
     provideDateFnsAdapter(),

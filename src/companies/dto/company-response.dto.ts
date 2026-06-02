@@ -5,6 +5,9 @@ export class CompanyResponseDto {
     @Expose() name: string;
     @Expose() industry: string;
     @Expose() employeeCount: number;
-    @Expose() createdAt: Date;
+
+    @Expose() domain: string | null;
     @Expose() isActive: boolean;
+    @Expose() updatedAt: Date;
+    @Expose() createdAt: Date;
 }

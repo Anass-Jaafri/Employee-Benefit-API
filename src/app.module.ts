@@ -10,6 +10,9 @@ import { EmployeesModule } from './employees/employees.module';
 import { envValidationSchema } from './config/env.validation';
 import { BenefitPackagesModule } from './benefit-packages/benefit-packages.module';
 import { ClaimsModule } from './claims/claims.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -17,6 +20,13 @@ import { ClaimsModule } from './claims/claims.module';
       isGlobal: true,
       validationSchema: envValidationSchema,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'global',
+        ttl: 60_000,   // 1 minute window
+        limit: 60,     // 60 requests per minute — default for all endpoints
+      },
+    ]),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -41,6 +51,9 @@ import { ClaimsModule } from './claims/claims.module';
     ClaimsModule,
   ],
   controllers: [AppController],
-  providers: [AppService,],
+  providers: [AppService, {
+    provide: APP_GUARD,
+    useClass: CustomThrottlerGuard,
+  },],
 })
 export class AppModule { }

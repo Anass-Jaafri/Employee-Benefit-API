@@ -25,5 +25,8 @@
     "strictPropertyInitialization": false,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["node_modules", "dist", "benefitflow-ui"]
+  "exclude": ["node_modules", "dist", "benefitflow-ui"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

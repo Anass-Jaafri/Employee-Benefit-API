@@ -1,8 +1,8 @@
 import { ApiHideProperty } from "@nestjs/swagger";
-import { BenefitPackage } from "src/benefit-packages/benefit-package.entity";
-import { Claim } from "src/claims/claim.entity";
-import { Company } from "src/companies/companies.entity";
-import { User } from "src/users/user.entity";
+import { BenefitPackage } from '../benefit-packages/benefit-package.entity';
+import { Claim } from "../claims/claim.entity";
+import { Company } from "../companies/companies.entity";
+import { User } from "../users/user.entity";
 import {
     Column,
     DeleteDateColumn,

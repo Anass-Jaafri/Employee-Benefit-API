@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ClaimsService } from './claims.service';
 import { BenefitPackagesService } from '../benefit-packages/benefit-packages.service';
 import { BenefitPackage } from '../../shared/models';
+import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.validator';
 
 @Component({
   selector: 'app-claim-submit-dialog',
@@ -29,12 +30,14 @@ import { BenefitPackage } from '../../shared/models';
 
     <mat-dialog-content>
       <form [formGroup]="form">
-
         <mat-form-field appearance="outline">
           <mat-label>Title</mat-label>
           <input matInput formControlName="title" />
           @if (form.controls.title.hasError('required')) {
             <mat-error>Required</mat-error>
+          }
+          @if (form.controls.title.hasError('whitespace') && form.controls.title.touched) {
+            <mat-error>Cannot be blank or spaces only</mat-error>
           }
         </mat-form-field>
 
@@ -83,7 +86,6 @@ import { BenefitPackage } from '../../shared/models';
         @if (error()) {
           <p class="error-message">{{ error() }}</p>
         }
-
       </form>
     </mat-dialog-content>
 
@@ -98,11 +100,24 @@ import { BenefitPackage } from '../../shared/models';
       </button>
     </mat-dialog-actions>
   `,
-  styles: [`
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
-    mat-form-field { width: 100%; }
-    .error-message { color: var(--mat-sys-error); font-size: 14px; margin: 0; }
-  `],
+  styles: [
+    `
+      mat-dialog-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 8px;
+      }
+      mat-form-field {
+        width: 100%;
+      }
+      .error-message {
+        color: var(--mat-sys-error);
+        font-size: 14px;
+        margin: 0;
+      }
+    `,
+  ],
 })
 export class ClaimSubmitDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -116,7 +131,7 @@ export class ClaimSubmitDialogComponent implements OnInit {
   error = signal<string | null>(null);
 
   form = this.fb.group({
-    title: ['', Validators.required],
+    title: ['', [Validators.required, noWhitespaceValidator]],
     description: [''],
     claimType: ['', Validators.required],
     benefitPackageId: [null as number | null, Validators.required],
@@ -125,7 +140,7 @@ export class ClaimSubmitDialogComponent implements OnInit {
 
   ngOnInit() {
     this.packagesService.getAll().subscribe({
-      next: (data) => this.packages.set(data.filter(p => p.isActive)),
+      next: (data) => this.packages.set(data.items.filter((p) => p.isActive)),
     });
   }
 

@@ -1,11 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from './companies.entity';
-import { DataSource, IsNull, Not, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, IsNull, Not, Repository } from 'typeorm';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CompanyResponseDto } from './dto/company-response.dto';
 import { toDto, toDtoArray } from 'src/common/helpers/serialize';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { paginate, PaginatedResult } from 'src/common/helpers/paginate';
 
 
 
@@ -16,9 +18,18 @@ export class CompaniesService {
     private dataSource: DataSource,
   ) { }
 
-  async findAll(): Promise<CompanyResponseDto[]> {
-    const companies = await this.companiesRepository.find();
-    return toDtoArray(CompanyResponseDto, companies);
+  async findAll(pagination: PaginationDto): Promise<PaginatedResult<CompanyResponseDto>> {
+    const where: FindOptionsWhere<Company> = {};
+    const companies = await paginate(
+      this.companiesRepository,
+      { where, },
+      pagination.page,
+      pagination.limit,
+    );
+    return {
+      items: toDtoArray(CompanyResponseDto, companies.items),
+      meta: companies.meta
+    };
   }
 
   async findOne(id: number): Promise<CompanyResponseDto> {

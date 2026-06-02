@@ -10,6 +10,7 @@ import { CompaniesService } from './companies.service';
 import { Company } from '../../shared/models';
 import { CompanyDialogComponent } from './company-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
+import { PageEvent, MatPaginator } from '@angular/material/paginator';
 
 @Component({
   selector: 'app-companies',
@@ -21,26 +22,27 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.c
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatPaginator,
   ],
   template: `
-  <div class="page-header">
-        <h2 class="selection-title">Companies</h2>
-        <button mat-flat-button (click)="openDialog()">
-            <mat-icon>add</mat-icon>
-            New Company
-        </button>
+    <div class="page-header">
+      <h2 class="selection-title">Companies</h2>
+      <button mat-flat-button (click)="openDialog()">
+        <mat-icon>add</mat-icon>
+        New Company
+      </button>
     </div>
     @if (loading()) {
-        <div class="spinner-container">
-            <mat-spinner diameter="48"/>
-        </div>
+      <div class="spinner-container">
+        <mat-spinner diameter="48" />
+      </div>
     } @else {
-        <table mat-table [dataSource]="companies()">
-            <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Name</th>
-                <td mat-cell *matCellDef="let company">{{company.name}}</td>
-            </ng-container>
-             <ng-container matColumnDef="industry">
+      <table mat-table [dataSource]="companies()">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let company">{{ company.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="industry">
           <th mat-header-cell *matHeaderCellDef>Industry</th>
           <td mat-cell *matCellDef="let company">{{ company.industry }}</td>
         </ng-container>
@@ -64,42 +66,56 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.c
 
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>
-
       </table>
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="limit()"
+        [pageSizeOptions]="[10, 20, 50]"
+        [pageIndex]="page() - 1"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      />
     }
   `,
-  styles: [`
-  .section-title { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .page-header h2 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 500;
-    }
-    table {
-      width: 100%;
-    }
-    .spinner-container {
-      display: flex;
-      justify-content: center;
-      padding: 48px;
-    }
-  `],
+  styles: [
+    `
+      .section-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0 0 20px;
+      }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .page-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 500;
+      }
+      table {
+        width: 100%;
+      }
+      .spinner-container {
+        display: flex;
+        justify-content: center;
+        padding: 48px;
+      }
+    `,
+  ],
 })
-
 export class CompaniesComponent implements OnInit {
-
   private companiesService = inject(CompaniesService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
   companies = signal<Company[]>([]);
   loading = signal(true);
+  page = signal(1);
+  limit = signal(20);
+  total = signal(0);
 
   columns = ['name', 'industry', 'employeeCount', 'actions'];
 
@@ -109,24 +125,29 @@ export class CompaniesComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.companiesService.getAll().subscribe({
+    this.companiesService.getAll(this.page(), this.limit()).subscribe({
       next: (data) => {
-        this.companies.set(data);
+        this.companies.set(data.items);
+        if (data.meta) this.total.set(data.meta.total);
         this.loading.set(false);
       },
       error: () => {
         this.snackBar.open('Failed to load companies', 'Close', { duration: 3000 });
         this.loading.set(false);
-      }
+      },
     });
   }
-
+  onPageChange(event: PageEvent) {
+    this.page.set(event.pageIndex + 1);
+    this.limit.set(event.pageSize);
+    this.load();
+  }
   openDialog(company?: Company) {
     const dialogRef = this.dialog.open(CompanyDialogComponent, {
       width: '480px',
       data: company ?? null,
     });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) this.load();
     });
   }
@@ -137,7 +158,7 @@ export class CompaniesComponent implements OnInit {
       data: { name: company.name },
     });
 
-    dialogRef.afterClosed().subscribe(confirmed => {
+    dialogRef.afterClosed().subscribe((confirmed) => {
       if (!confirmed) return;
       this.companiesService.delete(company.id).subscribe({
         next: () => {

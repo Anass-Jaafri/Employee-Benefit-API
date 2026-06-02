@@ -3,6 +3,7 @@ import {
     IsBoolean,
     IsDateString,
     IsEnum,
+    IsInt,
     IsNotEmpty,
     IsNumber,
     IsOptional,
@@ -10,12 +11,17 @@ import {
     Min,
 } from 'class-validator';
 import { PerkType } from '../benefit-package.entity';
+import { Type } from 'class-transformer';
+import { StripHtml } from 'src/common/decorators/strip-html.decorator';
 
 export class CreateBenefitPackageDto {
+
+    @StripHtml()
     @IsString()
     @IsNotEmpty()
     name: string;
 
+    @StripHtml()
     @IsOptional()
     @IsString()
     description?: string;
@@ -30,6 +36,7 @@ export class CreateBenefitPackageDto {
     perks?: PerkType[];
 
     @IsOptional()
+    @StripHtml()
     @IsNumber()
     @Min(0)
     maxBenefitAmount?: number;
@@ -42,6 +49,8 @@ export class CreateBenefitPackageDto {
     @IsDateString()
     endDate?: string;
 
-    @IsNotEmpty()
-    companyId: number;
+    @IsOptional()
+    @IsInt()
+    @Type(() => Number)
+    companyId?: number;
 }

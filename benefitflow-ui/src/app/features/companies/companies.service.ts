@@ -1,8 +1,9 @@
 import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { environment } from "../../../environments/environment";
-import { ApiResponse, Company } from "../../shared/models";
+import { ApiResponse, Company, PaginatedData, PaginatedResponse } from "../../shared/models";
 import { map } from "rxjs/operators";
+import { Observable } from "rxjs";
 
 export interface CreateCompanyPayload {
     name: string;
@@ -15,15 +16,13 @@ export class CompaniesService {
     private http = inject(HttpClient);
     private url = `${environment.apiUrl}/companies`;
 
-    getAll() {
-        return this.http.get<ApiResponse<Company[]>>(this.url).pipe(
+    getAll(page = 1, limit = 20): Observable<PaginatedData<Company>> {
+        return this.http.get<PaginatedResponse<Company>>(`${this.url}?page=${page}&limit=${limit}`).pipe(
             map(res => res.data)
         );
     }
 
-    getMy() {
-        return this.http.get<ApiResponse<Company>>(`${this.url}/my`).pipe(map(r => r.data));
-    }
+
 
     setActive(id: number, isActive: boolean) {
         return this.http.patch<ApiResponse<Company>>(`${this.url}/${id}`, { isActive }).pipe(map(r => r.data));
