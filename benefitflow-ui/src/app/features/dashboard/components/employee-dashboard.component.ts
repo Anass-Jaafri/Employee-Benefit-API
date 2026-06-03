@@ -1,217 +1,109 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CurrencyPipe, TitleCasePipe } from '@angular/common';
-import { forkJoin } from 'rxjs';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-import { StatCardComponent } from './stat-card.component';
-import { ClaimsService } from '../../claims/claims.service';
-import { BenefitPackagesService } from '../../benefit-packages/benefit-packages.service';
-import { Claim } from '../../../shared/models/claim.model';
-import { BenefitPackage } from '../../../shared/models/benefit-package.model';
+import { SectionCardComponent } from '../../../shared/components/section-card/section-card.component';
+import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-employee-dashboard',
-  imports: [
-    RouterLink, CurrencyPipe, TitleCasePipe, StatCardComponent,
-    MatCardModule, MatTableModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatSelectModule, MatChipsModule, MatProgressSpinnerModule,
-  ],
+  standalone: true,
+  imports: [RouterLink, SectionCardComponent, StatCardComponent],
   template: `
-    <div class="dashboard-wrapper">
+    <section class="dashboard-grid">
+      <app-stat-card
+        label="My Benefits"
+        value="Available"
+        meta="Review your active packages"
+        icon="card_giftcard"
+      />
+      <app-stat-card label="Claims" value="Submit" meta="Request reimbursements" icon="receipt" />
+      <app-stat-card
+        label="Status"
+        value="Track"
+        meta="Follow approval progress"
+        icon="query_stats"
+      />
+      <app-stat-card
+        label="Profile"
+        value="Maintain"
+        meta="Keep your details updated"
+        icon="person"
+      />
+    </section>
 
-      @if (loading()) {
-        <div class="loading-center"><mat-spinner diameter="48" /></div>
-      } @else {
+    <div class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_minmax(0,1fr)]">
+      <app-section-card
+        title="Employee workspace"
+        subtitle="Access your benefits, track claims, and keep your profile information up to date."
+      >
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="soft-panel">
+            <h3
+              class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Suggested next steps
+            </h3>
+            <ul class="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+              <li>• Review the benefit packages available to you.</li>
+              <li>• Submit claims for eligible expenses.</li>
+              <li>• Track pending approvals and payment progress.</li>
+              <li>• Confirm your personal information is correct.</li>
+            </ul>
+          </div>
 
-        <h2 class="section-title">My Overview</h2>
+          <div
+            class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <h3
+              class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Activity summary
+            </h3>
 
-        <div class="stats-grid">
-          <app-stat-card icon="hourglass_top" [value]="counts().pending"  label="Pending Claims"  color="orange" />
-          <app-stat-card icon="check_circle"  [value]="counts().approved" label="Approved Claims" color="green"  />
-          <app-stat-card icon="payments"      [value]="counts().paid"     label="Paid Claims"     color="blue"   />
-          <app-stat-card icon="cancel"        [value]="counts().rejected" label="Rejected Claims" color="red"    />
-        </div>
-
-        <!-- Enrolled packages -->
-        <mat-card class="section">
-          <mat-card-header>
-            <mat-card-title>My Benefit Packages</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            @if (packages().length === 0) {
-              <p class="empty-state">You are not enrolled in any benefit packages yet.</p>
-            } @else {
-              <div class="packages-grid">
-                @for (pkg of packages(); track pkg.id) {
-                  <mat-card [class.inactive]="!pkg.isActive">
-                    <mat-card-header>
-                      <mat-card-title>{{ pkg.name }}</mat-card-title>
-                      <mat-card-subtitle>{{ pkg.company.name }}</mat-card-subtitle>
-                    </mat-card-header>
-                    <mat-card-content>
-                      @if (pkg.maxBenefitAmount) {
-                        <p class="package-amount">Up to {{ pkg.maxBenefitAmount | currency }}</p>
-                      }
-                      <div class="perks">
-                        @for (perk of pkg.perks; track perk) {
-                          <mat-chip>{{ perk | titlecase }}</mat-chip>
-                        }
-                      </div>
-                    </mat-card-content>
-                    <mat-card-footer class="pkg-footer">
-                      <span [class]="pkg.isActive ? 'status-active' : 'status-inactive'">
-                        ● {{ pkg.isActive ? 'Active' : 'Inactive' }}
-                      </span>
-                    </mat-card-footer>
-                  </mat-card>
-                }
+            <div class="mt-4 space-y-4">
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Benefits review</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">73%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[73%] rounded-full bg-sky-600"></div>
+                </div>
               </div>
-            }
-          </mat-card-content>
-        </mat-card>
 
-        <!-- Claims -->
-        <mat-card class="section">
-          <mat-card-header>
-            <mat-card-title>My Claims</mat-card-title>
-            <span class="spacer"></span>
-            <mat-form-field appearance="outline" class="inline-filter">
-              <mat-label>Status</mat-label>
-              <mat-select [value]="claimFilter()"
-                          (selectionChange)="claimFilter.set($event.value)">
-                <mat-option value="all">All</mat-option>
-                <mat-option value="pending">Pending</mat-option>
-                <mat-option value="approved">Approved</mat-option>
-                <mat-option value="rejected">Rejected</mat-option>
-                <mat-option value="paid">Paid</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <a mat-button color="primary" routerLink="/dashboard/claims">
-              View all <mat-icon>arrow_forward</mat-icon>
-            </a>
-          </mat-card-header>
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Claim completion</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">64%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[64%] rounded-full bg-amber-500"></div>
+                </div>
+              </div>
 
-          <mat-card-content>
-            <table mat-table [dataSource]="filteredClaims()" class="full-width">
-              <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>Title</th>
-                <td mat-cell *matCellDef="let c">{{ c.title }}</td>
-              </ng-container>
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Profile completeness</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">91%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[91%] rounded-full bg-emerald-600"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </app-section-card>
 
-              <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef>Amount</th>
-                <td mat-cell *matCellDef="let c">{{ c.amount | currency }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="package">
-                <th mat-header-cell *matHeaderCellDef>Package</th>
-                <td mat-cell *matCellDef="let c">{{ c.benefitPackage?.name }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let c">
-                  <span [class]="'status-chip status-' + c.status">
-                    {{ c.status | titlecase }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="claimColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: claimColumns;"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell no-data" [attr.colspan]="claimColumns.length">
-                  No claims found
-                </td>
-              </tr>
-            </table>
-          </mat-card-content>
-        </mat-card>
-      }
+      <app-section-card title="Quick links" subtitle="Open the areas you use most often.">
+        <div class="grid gap-3">
+          <a routerLink="/dashboard/benefit-packages" class="quick-link"
+            >View my benefit packages</a
+          >
+          <a routerLink="/dashboard/claims" class="quick-link">Submit or track claims</a>
+          <a routerLink="/dashboard/profile" class="quick-link">Update my profile</a>
+        </div>
+      </app-section-card>
     </div>
   `,
-  styles: [`
-    .dashboard-wrapper { padding: 24px; max-width: 1400px; margin: 0 auto; }
-    .loading-center    { display: flex; justify-content: center; padding: 80px; }
-    .section-title     { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
-    .spacer            { flex: 1; }
-    .section           { margin-bottom: 24px; }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px; margin-bottom: 24px;
-    }
-    mat-card-header  { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .inline-filter   { width: 150px; }
-    .full-width      { width: 100%; }
-    .no-data         { padding: 24px; text-align: center; color: rgba(0,0,0,0.4); }
-    .empty-state     { color: rgba(0,0,0,0.4); padding: 16px 0; text-align: center; }
-
-    /* Packages grid */
-    .packages-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 16px;
-    }
-    .inactive        { opacity: 0.6; }
-    .package-amount  { font-size: 18px; font-weight: 600; color: #1976d2; margin: 8px 0; }
-    .perks           { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .pkg-footer      { padding: 8px 16px; }
-    .status-active   { color: #2e7d32; font-size: 13px; font-weight: 500; }
-    .status-inactive { color: #c62828; font-size: 13px; font-weight: 500; }
-
-    /* Claim status chips */
-    .status-chip     { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-    .status-pending  { background: #fff8e1; color: #f57f17; }
-    .status-approved { background: #e8f5e9; color: #2e7d32; }
-    .status-rejected { background: #ffebee; color: #c62828; }
-    .status-paid     { background: #e3f2fd; color: #1565c0; }
-  `],
 })
-export class EmployeeDashboardComponent implements OnInit {
-  private claimsService = inject(ClaimsService);
-  private packagesService = inject(BenefitPackagesService);
-
-  loading = signal(true);
-  claims = signal<Claim[]>([]);
-  packages = signal<BenefitPackage[]>([]);
-
-  claimFilter = signal<string>('all');
-
-  readonly claimColumns = ['title', 'amount', 'package', 'status'];
-
-  readonly counts = computed(() => ({
-    pending: this.claims().filter(c => c.status === 'pending').length,
-    approved: this.claims().filter(c => c.status === 'approved').length,
-    rejected: this.claims().filter(c => c.status === 'rejected').length,
-    paid: this.claims().filter(c => c.status === 'paid').length,
-  }));
-
-  readonly filteredClaims = computed(() => {
-    const filter = this.claimFilter();
-    if (filter === 'all') return this.claims();
-    return this.claims().filter(c => c.status === filter);
-  });
-
-  ngOnInit(): void {
-    forkJoin({
-      claims: this.claimsService.getMy(),
-      packages: this.packagesService.getMyBenefit(),
-    }).subscribe({
-      next: ({ claims, packages }) => {
-        this.claims.set(claims);
-        this.packages.set(packages);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-}
+export class EmployeeDashboardComponent {}

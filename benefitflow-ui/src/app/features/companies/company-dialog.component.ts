@@ -25,38 +25,40 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
 
     <mat-dialog-content>
       <form [formGroup]="form" id="company-form" (ngSubmit)="submit()">
-        <mat-form-field appearance="outline">
-          <mat-label>Company name</mat-label>
-          <input matInput formControlName="name" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Name is required</mat-error>
-          }
-          @if (form.controls.name.hasError('whitespace') && form.controls.name.touched) {
-            <mat-error>Cannot be blank or spaces only</mat-error>
-          }
-        </mat-form-field>
+        <div class="form-body">
+          <mat-form-field appearance="outline">
+            <mat-label>Company name</mat-label>
+            <input matInput formControlName="name" />
+            @if (form.controls.name.hasError('required')) {
+              <mat-error>Name is required</mat-error>
+            }
+            @if (form.controls.name.hasError('whitespace') && form.controls.name.touched) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Industry</mat-label>
-          <input matInput formControlName="industry" />
-          @if (form.controls.industry.hasError('required')) {
-            <mat-error>Industry is required</mat-error>
-          }
-          @if (form.controls.industry.hasError('whitespace') && form.controls.industry.touched) {
-            <mat-error>Cannot be blank or spaces only</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Industry</mat-label>
+            <input matInput formControlName="industry" />
+            @if (form.controls.industry.hasError('required')) {
+              <mat-error>Industry is required</mat-error>
+            }
+            @if (form.controls.industry.hasError('whitespace') && form.controls.industry.touched) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Employee count</mat-label>
-          <input matInput type="number" formControlName="employeeCount" />
-          @if (form.controls.employeeCount.hasError('required')) {
-            <mat-error>Employee count is required</mat-error>
-          }
-          @if (form.controls.employeeCount.hasError('min')) {
-            <mat-error>Must be at least 1</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Employee count</mat-label>
+            <input matInput type="number" formControlName="employeeCount" />
+            @if (form.controls.employeeCount.hasError('required')) {
+              <mat-error>Employee count is required</mat-error>
+            }
+            @if (form.controls.employeeCount.hasError('min')) {
+              <mat-error>Must be at least 1</mat-error>
+            }
+          </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
 
@@ -77,8 +79,13 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-top: 8px;
+        padding-top: 16px;
       }
+
+      .form-body {
+        margin-top: 6px;
+      }
+
       mat-form-field {
         width: 100%;
       }

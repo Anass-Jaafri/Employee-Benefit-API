@@ -38,81 +38,83 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
 
     <mat-dialog-content>
       <form [formGroup]="form">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Package name</mat-label>
-          <input matInput formControlName="name" />
-          @if (form.controls.name.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-          @if (form.controls.name.hasError('whitespace') && form.controls.name.touched) {
-            <mat-error>Cannot be blank or spaces only</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-          @if (
-            form.controls.description.hasError('whitespace') && form.controls.description.touched
-          ) {
-            <mat-error>Cannot be blank or spaces only</mat-error>
-          }
-        </mat-form-field>
-
-        <!-- Company selector — admin only. HR manager's company is resolved on the backend. -->
-        @if (isAdmin()) {
+        <div class="form-body">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Company</mat-label>
-            <mat-select formControlName="companyId">
-              @for (company of companies(); track company.id) {
-                <mat-option [value]="company.id">{{ company.name }}</mat-option>
-              }
-            </mat-select>
-            @if (form.controls.companyId.hasError('required')) {
+            <mat-label>Package name</mat-label>
+            <input matInput formControlName="name" />
+            @if (form.controls.name.hasError('required')) {
               <mat-error>Required</mat-error>
             }
-          </mat-form-field>
-        }
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Perks</mat-label>
-          <mat-select formControlName="perks" multiple>
-            @for (perk of availablePerks; track perk.value) {
-              <mat-option [value]="perk.value">{{ perk.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Max benefit amount (€)</mat-label>
-          <input matInput type="number" formControlName="maxBenefitAmount" />
-        </mat-form-field>
-
-        <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>Start date</mat-label>
-            <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
-            <mat-datepicker-toggle matSuffix [for]="startPicker" />
-            <mat-datepicker #startPicker />
-            @if (form.controls.startDate.hasError('matDatepickerParse')) {
-              <mat-error>Invalid date</mat-error>
+            @if (form.controls.name.hasError('whitespace') && form.controls.name.touched) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
             }
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>End date</mat-label>
-            <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
-            <mat-datepicker-toggle matSuffix [for]="endPicker" />
-            <mat-datepicker #endPicker />
-            @if (form.controls.endDate.hasError('matDatepickerParse')) {
-              <mat-error>Invalid date</mat-error>
-            } @else if (form.controls.endDate.hasError('dateRange')) {
-              <mat-error>End date must be after start date</mat-error>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+            @if (
+              form.controls.description.hasError('whitespace') && form.controls.description.touched
+            ) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
             }
           </mat-form-field>
+
+          <!-- Company selector — admin only. HR manager's company is resolved on the backend. -->
+          @if (isAdmin()) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Company</mat-label>
+              <mat-select formControlName="companyId">
+                @for (company of companies(); track company.id) {
+                  <mat-option [value]="company.id">{{ company.name }}</mat-option>
+                }
+              </mat-select>
+              @if (form.controls.companyId.hasError('required')) {
+                <mat-error>Required</mat-error>
+              }
+            </mat-form-field>
+          }
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Perks</mat-label>
+            <mat-select formControlName="perks" multiple>
+              @for (perk of availablePerks; track perk.value) {
+                <mat-option [value]="perk.value">{{ perk.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Max benefit amount (€)</mat-label>
+            <input matInput type="number" formControlName="maxBenefitAmount" />
+          </mat-form-field>
+
+          <div class="row">
+            <mat-form-field appearance="outline">
+              <mat-label>Start date</mat-label>
+              <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+              <mat-datepicker-toggle matSuffix [for]="startPicker" />
+              <mat-datepicker #startPicker />
+              @if (form.controls.startDate.hasError('matDatepickerParse')) {
+                <mat-error>Invalid date</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>End date</mat-label>
+              <input matInput [matDatepicker]="endPicker" formControlName="endDate" />
+              <mat-datepicker-toggle matSuffix [for]="endPicker" />
+              <mat-datepicker #endPicker />
+              @if (form.controls.endDate.hasError('matDatepickerParse')) {
+                <mat-error>Invalid date</mat-error>
+              } @else if (form.controls.endDate.hasError('dateRange')) {
+                <mat-error>End date must be after start date</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <mat-checkbox formControlName="isActive">Active</mat-checkbox>
         </div>
-
-        <mat-checkbox formControlName="isActive">Active</mat-checkbox>
       </form>
     </mat-dialog-content>
 
@@ -133,21 +135,15 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-top: 8px;
+        padding-top: 16px;
       }
-      .full-width {
+
+      .form-body {
+        margin-top: 6px;
+      }
+
+      mat-form-field {
         width: 100%;
-      }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-      .row mat-form-field {
-        width: 100%;
-      }
-      mat-checkbox {
-        margin-bottom: 8px;
       }
     `,
   ],

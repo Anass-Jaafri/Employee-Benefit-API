@@ -1,187 +1,118 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
-import { StatCardComponent } from './stat-card.component';
-import { CompaniesService } from '../../companies/companies.service';
-import { EmployeesService } from '../../employees/employees.service';
-import { ClaimsService } from '../../claims/claims.service';
-import { Company } from '../../../shared/models/company.model';
-import { MatChipsModule } from '@angular/material/chips';
+import { SectionCardComponent } from '../../../shared/components/section-card/section-card.component';
+import { StatCardComponent } from '../../../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [
-    RouterLink, StatCardComponent,
-    MatCardModule, MatTableModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatChipsModule, MatProgressSpinnerModule,
-  ],
+  standalone: true,
+  imports: [RouterLink, SectionCardComponent, StatCardComponent],
   template: `
-    <div class="dashboard-wrapper">
- 
-      @if (loading()) {
-        <div class="loading-center"><mat-spinner diameter="48" /></div>
-      } @else {
- 
-        <h2 class="section-title">Overview</h2>
- 
-        <div class="stats-grid">
-          <app-stat-card icon="business"        [value]="totalCompanies()"    label="Total Companies"  color="blue"   />
-          <app-stat-card icon="check_circle"    [value]="activeCompanies()"   label="Active Companies" color="green"  />
-          <app-stat-card icon="people"          [value]="employeeCount()"     label="Total Employees"  color="purple" />
-          <app-stat-card icon="pending_actions" [value]="pendingClaimCount()" label="Pending Claims"   color="orange" />
-        </div>
- 
-        <mat-card>
-          <mat-card-header>
-            <mat-card-title>Companies</mat-card-title>
-            <span class="spacer"></span>
-            <a mat-button color="primary" routerLink="/dashboard/companies">
-              Manage <mat-icon>arrow_forward</mat-icon>
-            </a>
-          </mat-card-header>
- 
-          <mat-card-content>
-            <div class="table-controls">
-              <mat-form-field appearance="outline" class="search-field">
-                <mat-label>Search by name</mat-label>
-                <mat-icon matPrefix>search</mat-icon>
-                <input matInput (input)="companySearch.set($any($event.target).value)" />
-              </mat-form-field>
- 
-              <mat-form-field appearance="outline" class="filter-field">
-                <mat-label>Status</mat-label>
-                <mat-select [value]="companyStatusFilter()"
-                            (selectionChange)="companyStatusFilter.set($event.value)">
-                  <mat-option value="all">All</mat-option>
-                  <mat-option value="active">Active</mat-option>
-                  <mat-option value="inactive">Inactive</mat-option>
-                </mat-select>
-              </mat-form-field>
+    <section class="dashboard-grid">
+      <app-stat-card
+        label="Organizations"
+        value="Manage"
+        meta="Create and maintain companies"
+        icon="business"
+      />
+      <app-stat-card
+        label="Employees"
+        value="Track"
+        meta="Oversee workforce records"
+        icon="groups"
+      />
+      <app-stat-card
+        label="Benefit Packages"
+        value="Configure"
+        meta="Define package availability"
+        icon="featured_seasonal_and_gifts"
+      />
+      <app-stat-card
+        label="Claims"
+        value="Review"
+        meta="Audit platform-wide activity"
+        icon="receipt_long"
+      />
+    </section>
+
+    <div class="mt-6 grid gap-6 xl:grid-cols-[1.4fr_minmax(0,1fr)]">
+      <app-section-card
+        title="Administrator workspace"
+        subtitle="Use the navigation to manage the full benefits lifecycle across your organization."
+      >
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="soft-panel">
+            <h3
+              class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Recommended actions
+            </h3>
+            <ul class="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+              <li>• Review newly created companies and assign ownership.</li>
+              <li>• Verify employees are assigned to the correct organizations.</li>
+              <li>• Audit package limits and active benefit offerings.</li>
+              <li>• Monitor pending claims and resolve blockers quickly.</li>
+            </ul>
+          </div>
+
+          <div
+            class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+          >
+            <h3
+              class="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+            >
+              Platform health
+            </h3>
+
+            <div class="mt-4 space-y-4">
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Profile setup</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">92%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[92%] rounded-full bg-sky-600"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Access controls</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">88%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[88%] rounded-full bg-emerald-600"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-1 flex items-center justify-between text-sm">
+                  <span class="text-slate-600 dark:text-slate-300">Claims processing</span>
+                  <span class="font-semibold text-slate-900 dark:text-white">76%</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div class="h-2 w-[76%] rounded-full bg-amber-500"></div>
+                </div>
+              </div>
             </div>
- 
-            <table mat-table [dataSource]="filteredCompanies()" class="full-width">
-              <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Company</th>
-                <td mat-cell *matCellDef="let c">{{ c.name }}</td>
-              </ng-container>
- 
-              <ng-container matColumnDef="industry">
-                <th mat-header-cell *matHeaderCellDef>Industry</th>
-                <td mat-cell *matCellDef="let c">{{ c.industry }}</td>
-              </ng-container>
- 
-              <ng-container matColumnDef="employeeCount">
-                <th mat-header-cell *matHeaderCellDef>Employees</th>
-                <td mat-cell *matCellDef="let c">{{ c.employeeCount }}</td>
-              </ng-container>
- 
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Status</th>
-                <td mat-cell *matCellDef="let c">
-                  <mat-chip [class]="c.isActive ? 'status-active' : 'status-inactive'">
-                    {{ c.isActive ? 'Active' : 'Inactive' }}
-                  </mat-chip>
-                </td>
-              </ng-container>
- 
-              <tr mat-header-row *matHeaderRowDef="columns"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns;"></tr>
-              <tr class="mat-row" *matNoDataRow>
-                <td class="mat-cell no-data" [attr.colspan]="columns.length">
-                  No companies match your filters
-                </td>
-              </tr>
-            </table>
-          </mat-card-content>
-        </mat-card>
-      }
+          </div>
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        title="Quick links"
+        subtitle="Fast access to the most common administrator actions."
+      >
+        <div class="grid gap-3">
+          <a routerLink="/dashboard/companies" class="quick-link">Manage companies</a>
+          <a routerLink="/dashboard/employees" class="quick-link">Review employees</a>
+          <a routerLink="/dashboard/benefit-packages" class="quick-link"
+            >Configure benefit packages</a
+          >
+          <a routerLink="/dashboard/claims" class="quick-link">Review claims</a>
+        </div>
+      </app-section-card>
     </div>
   `,
-  styles: [`
-    .dashboard-wrapper  { padding: 24px; max-width: 1400px; margin: 0 auto; }
-    .loading-center     { display: flex; justify-content: center; padding: 80px; }
-    .section-title      { font-size: 22px; font-weight: 600; margin: 0 0 20px; }
-    .spacer             { flex: 1; }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px; margin-bottom: 24px;
-    }
-    mat-card-header     { display: flex; align-items: center; }
-    .table-controls     { display: flex; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
-    .search-field       { flex: 1; min-width: 200px; }
-    .filter-field       { width: 180px; }
-    .full-width         { width: 100%; }
-    .no-data            { padding: 24px; text-align: center; color: rgba(0,0,0,0.4); }
-    .status-active   { --mdc-chip-label-text-color: #2e7d32; background: #e8f5e9 !important; }
-    .status-inactive { --mdc-chip-label-text-color: #c62828; background: #ffebee !important; }
-  `],
 })
-export class AdminDashboardComponent implements OnInit {
-  private companiesService = inject(CompaniesService);
-  private employeesService = inject(EmployeesService);
-  private claimsService = inject(ClaimsService);
-
-  loading = signal(true);
-  companies = signal<Company[]>([]);
-  employeeCount = signal(0);
-  pendingClaimCount = signal(0);
-
-  companySearch = signal('');
-  companyStatusFilter = signal<'all' | 'active' | 'inactive'>('all');
-
-  readonly columns = ['name', 'industry', 'employeeCount', 'status'];
-
-  readonly totalCompanies = computed(() => this.companies().length);
-  readonly activeCompanies = computed(() => this.companies().filter(c => c.isActive).length);
-
-  readonly filteredCompanies = computed(() => {
-    let list = this.companies();
-    const search = this.companySearch().toLowerCase().trim();
-    const filter = this.companyStatusFilter();
-    if (search) list = list.filter(c => c.name.toLowerCase().includes(search));
-    if (filter === 'active') list = list.filter(c => c.isActive);
-    if (filter === 'inactive') list = list.filter(c => !c.isActive);
-    return list;
-  });
-
-  ngOnInit(): void {
-    forkJoin({
-      companies: this.companiesService.getAll(),
-      employees: this.employeesService.getAll(),
-      claims: this.claimsService.getAll(),
-    }).subscribe({
-      next: ({ companies, employees, claims }) => {
-        this.companies.set(companies.items);
-        this.employeeCount.set(employees.meta.total);
-        this.pendingClaimCount.set(claims.items.filter(c => c.status === 'pending').length);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-  }
-
-  toggleCompany(company: Company): void {
-    const newState = !company.isActive;
-    this.companies.update(list =>
-      list.map(c => c.id === company.id ? { ...c, isActive: newState } : c)
-    );
-    this.companiesService.setActive(company.id, newState).subscribe({
-      error: () =>
-        this.companies.update(list =>
-          list.map(c => c.id === company.id ? { ...c, isActive: !newState } : c)
-        ),
-    });
-  }
-}
+export class AdminDashboardComponent {}

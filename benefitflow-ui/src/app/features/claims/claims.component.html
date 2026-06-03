@@ -1,0 +1,80 @@
+<div class="page-grid">
+  <section class="two-col">
+    <article class="card">
+      <h2 class="card-title">Claims pipeline</h2>
+      <p class="card-subtitle">Review and process reimbursement requests faster.</p>
+
+      <div class="stack" style="margin-top:20px;">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Waiting for review</strong>
+            <span class="pill warning">17</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Approved today</strong>
+            <span class="pill success">24</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Rejected / missing docs</strong>
+            <span class="pill danger">6</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="card-title">Review checklist</h2>
+      <p class="card-subtitle">The dashboard can surface a fast checklist for reviewers.</p>
+      <div class="stack" style="margin-top:20px;">
+        <div class="empty-state">Verify invoice date and provider name</div>
+        <div class="empty-state">Check policy coverage and limits</div>
+        <div class="empty-state">Confirm supporting documents</div>
+      </div>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Claims</h2>
+        <p class="card-subtitle">All requests with their current processing status.</p>
+      </div>
+      <button class="secondary-btn" type="button">Review queue</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Company</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let claim of claims">
+            <td><strong>{{ claim.employee }}</strong></td>
+            <td>{{ claim.company }}</td>
+            <td>{{ claim.type }}</td>
+            <td>{{ claim.amount }}</td>
+            <td>
+              <span class="pill"
+                [class.success]="claim.status === 'Approved'"
+                [class.warning]="claim.status === 'In review' || claim.status === 'Pending'"
+                [class.danger]="claim.status === 'Rejected'"
+              >
+                {{ claim.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

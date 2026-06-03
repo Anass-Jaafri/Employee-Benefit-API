@@ -1,18 +1,13 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { EmployeesService } from './employees.service';
 import { EmployeeDialogComponent } from './employee-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
@@ -22,169 +17,199 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-employees',
+  standalone: true,
   imports: [
     ReactiveFormsModule,
-    MatTableModule,
     MatButtonModule,
-    MatIconModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
     MatChipsModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatInputModule,
+    MatDialogModule,
+    MatIconModule,
     MatPaginator,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
   ],
   template: `
-    <div class="page-header">
-      <h2>Employees</h2>
-      <button mat-flat-button (click)="openDialog()">
-        <mat-icon>add</mat-icon>
-        New Employee
-      </button>
-    </div>
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">Employees</h1>
+        <p class="page-subtitle">
+          View, filter, edit, and manage employee records across companies.
+        </p>
+      </div>
 
-    <!-- Filters -->
-    <div class="filters-row" [formGroup]="filterForm">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Search by name or email</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput formControlName="search" />
-      </mat-form-field>
-
-      @if (isAdmin()) {
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="">All</mat-option>
-            <mat-option value="active">Active</mat-option>
-            <mat-option value="inactive">Inactive</mat-option>
-            <mat-option value="on_leave">On Leave</mat-option>
-          </mat-select>
-        </mat-form-field>
+      @if (isAdmin() || isHrManager()) {
+        <button
+          type="button"
+          mat-flat-button
+          color="primary"
+          class="!rounded-xl"
+          (click)="openDialog()"
+        >
+          <mat-icon>add</mat-icon>
+          <span>New Employee</span>
+        </button>
       }
+    </section>
 
-      <button mat-stroked-button (click)="resetFilters()">
-        <mat-icon>clear</mat-icon>
-        Reset
-      </button>
-    </div>
+    <section class="grid gap-4 md:grid-cols-3">
+      <div class="stat-card">
+        <p class="stat-label">Employees</p>
+        <p class="stat-value">{{ total() || employees().length }}</p>
+        <p class="stat-meta">Tracked records in your workspace</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Active</p>
+        <p class="stat-value">{{ countByStatus('active') }}</p>
+        <p class="stat-meta">Currently active employees</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">On Leave</p>
+        <p class="stat-value">{{ countByStatus('on_leave') }}</p>
+        <p class="stat-meta">Employees temporarily unavailable</p>
+      </div>
+    </section>
 
-    @if (loading()) {
-      <div class="spinner-container"><mat-spinner diameter="48" /></div>
-    } @else {
-      <table mat-table [dataSource]="employees()">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let e">{{ e.firstName }} {{ e.lastName }}</td>
-        </ng-container>
+    <section class="content-card mt-6">
+      <form [formGroup]="filterForm" class="grid gap-4 md:grid-cols-3">
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white">
+            Search
+          </label>
+          <input
+            formControlName="search"
+            type="text"
+            placeholder="Search by name or email"
+            class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-400 dark:focus:ring-sky-900/30"
+          />
+        </div>
 
-        <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef>Email</th>
-          <td mat-cell *matCellDef="let e">{{ e.email }}</td>
-        </ng-container>
+        @if (isAdmin()) {
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white">
+              Status
+            </label>
+            <select
+              formControlName="status"
+              class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-sky-900/30"
+            >
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="on_leave">On Leave</option>
+            </select>
+          </div>
+        }
+      </form>
 
-        <ng-container matColumnDef="jobTitle">
-          <th mat-header-cell *matHeaderCellDef>Job Title</th>
-          <td mat-cell *matCellDef="let e">{{ e.jobTitle ?? '—' }}</td>
-        </ng-container>
+      <div class="mt-4 flex justify-end">
+        <button
+          mat-stroked-button
+          type="button"
+          class="!rounded-xl dark:!border-slate-700 dark:!text-slate-200"
+          (click)="resetFilters()"
+        >
+          Reset Filters
+        </button>
+      </div>
+    </section>
 
-        <ng-container matColumnDef="company">
-          <th mat-header-cell *matHeaderCellDef>Company</th>
-          <td mat-cell *matCellDef="let e">{{ e.company?.name ?? '—' }}</td>
-        </ng-container>
+    <section class="data-table-shell mt-6">
+      @if (loading()) {
+        <div class="flex items-center justify-center p-12">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (!employees().length) {
+        <div class="p-10 text-center">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">No employees found</h3>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Try adjusting filters or create a new employee record.
+          </p>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Job Title</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th class="!text-right">Actions</th>
+              </tr>
+            </thead>
 
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let e">
-            <mat-chip [class]="'status-' + e.status">{{ statusLabel(e.status) }}</mat-chip>
-          </td>
-        </ng-container>
+            <tbody>
+              @for (e of employees(); track e.id) {
+                <tr>
+                  <td>
+                    <div class="font-semibold text-slate-900 dark:text-white">
+                      {{ e.firstName }} {{ e.lastName }}
+                    </div>
+                  </td>
+                  <td>{{ e.email }}</td>
+                  <td>{{ e.jobTitle ?? '—' }}</td>
+                  <td>{{ e.company?.name ?? '—' }}</td>
+                  <td>
+                    <span
+                      class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                      [class.bg-emerald-100]="e.status === 'active'"
+                      [class.text-emerald-700]="e.status === 'active'"
+                      [class.bg-red-100]="e.status === 'inactive'"
+                      [class.text-red-700]="e.status === 'inactive'"
+                      [class.bg-amber-100]="e.status === 'on_leave'"
+                      [class.text-amber-700]="e.status === 'on_leave'"
+                    >
+                      {{ statusLabel(e.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span>{{ roleLabel(e.user?.role) }}</span>
+                  </td>
+                  <td>
+                    <div class="flex justify-end gap-2">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        matTooltip="Edit employee"
+                        (click)="openDialog(e)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
 
-        <ng-container matColumnDef="role">
-          <th mat-header-cell *matHeaderCellDef>Role</th>
-          <td mat-cell *matCellDef="let e">{{ roleLabel(e.user?.role) }}</td>
-        </ng-container>
+                      @if (isAdmin() || isHrManager()) {
+                        <button
+                          mat-icon-button
+                          type="button"
+                          color="warn"
+                          matTooltip="Delete employee"
+                          (click)="delete(e)"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
 
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let e">
-            <button mat-icon-button matTooltip="Edit" (click)="openDialog(e)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(e)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-      </table>
-
-      @if (isAdmin()) {
-        <mat-paginator
-          [length]="total()"
-          [pageSize]="limit()"
-          [pageSizeOptions]="[10, 20, 50]"
-          [pageIndex]="page() - 1"
-          (page)="onPageChange($event)"
-          showFirstLastButtons
-        />
+        @if (isAdmin()) {
+          <mat-paginator
+            [length]="total()"
+            [pageSize]="limit()"
+            [pageIndex]="page() - 1"
+            [pageSizeOptions]="[10, 20, 50]"
+            (page)="onPageChange($event)"
+          />
+        }
       }
-    }
+    </section>
   `,
-  styles: [
-    `
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-      .page-header h2 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 500;
-      }
-      .filters-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 16px;
-      }
-      .search-field {
-        flex: 1;
-        min-width: 240px;
-      }
-      .filter-field {
-        width: 180px;
-      }
-      table {
-        width: 100%;
-      }
-      .spinner-container {
-        display: flex;
-        justify-content: center;
-        padding: 48px;
-      }
-      .status-active {
-        --mdc-chip-label-text-color: #2e7d32;
-        background: #e8f5e9 !important;
-      }
-      .status-inactive {
-        --mdc-chip-label-text-color: #c62828;
-        background: #ffebee !important;
-      }
-      .status-on_leave {
-        --mdc-chip-label-text-color: #e65100;
-        background: #fff3e0 !important;
-      }
-    `,
-  ],
 })
 export class EmployeesComponent implements OnInit {
   private authService = inject(AuthService);
@@ -202,7 +227,6 @@ export class EmployeesComponent implements OnInit {
   total = signal(0);
   employees = signal<Employee[]>([]);
   loading = signal(true);
-  columns = ['name', 'email', 'jobTitle', 'company', 'status', 'role', 'actions'];
 
   filterForm = this.fb.group({
     search: [''],
@@ -227,9 +251,11 @@ export class EmployeesComponent implements OnInit {
     return role ? (labels[role] ?? role) : '—';
   }
 
+  countByStatus(status: string): number {
+    return this.employees().filter((e) => e.status === status).length;
+  }
+
   ngOnInit() {
-    // Debounce not needed for select; for search input it would help
-    // but valueChanges keeps it simple and consistent with claims
     this.filterForm.valueChanges.subscribe(() => {
       this.page.set(1);
       this.load();
@@ -287,6 +313,7 @@ export class EmployeesComponent implements OnInit {
 
   updateRole(employee: Employee, role: UserRole): void {
     if (!employee.user) return;
+
     const previousRole = employee.user.role;
 
     this.employees.update((list) =>
@@ -311,6 +338,7 @@ export class EmployeesComponent implements OnInit {
       width: '520px',
       data: employee ?? null,
     });
+
     dialogRef.afterClosed().subscribe((result) => {
       if (result) this.load();
     });
@@ -321,8 +349,10 @@ export class EmployeesComponent implements OnInit {
       width: '360px',
       data: { name: `${employee.firstName} ${employee.lastName}` },
     });
+
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (!confirmed) return;
+
       this.employeesService.delete(employee.id).subscribe({
         next: () => {
           this.snackBar.open('Employee deleted', 'Close', { duration: 3000 });

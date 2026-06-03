@@ -1,0 +1,17 @@
+<div class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <div class="flex min-h-screen">
+    <app-dashboard-sidebar
+      [open]="sidebarOpen()"
+      [role]="currentRole()"
+      (closeSidebar)="closeSidebar()"
+    />
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      <app-dashboard-header (menuClick)="toggleSidebar()" />
+
+      <main class="flex-1 p-4 md:p-6 xl:p-8">
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+</div>

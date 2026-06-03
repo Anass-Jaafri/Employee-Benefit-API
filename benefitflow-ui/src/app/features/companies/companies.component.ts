@@ -1,110 +1,158 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { MatTableModule } from '@angular/material/table';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CompaniesService } from './companies.service';
 import { Company } from '../../shared/models';
 import { CompanyDialogComponent } from './company-dialog.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
-import { PageEvent, MatPaginator } from '@angular/material/paginator';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-companies',
+  standalone: true,
   imports: [
-    MatTableModule,
+    DecimalPipe,
     MatButtonModule,
-    MatIconModule,
     MatDialogModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    MatIconModule,
     MatPaginator,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    EmptyStateComponent,
   ],
   template: `
-    <div class="page-header">
-      <h2 class="selection-title">Companies</h2>
-      <button mat-flat-button (click)="openDialog()">
-        <mat-icon>add</mat-icon>
-        New Company
-      </button>
-    </div>
-    @if (loading()) {
-      <div class="spinner-container">
-        <mat-spinner diameter="48" />
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">Companies</h1>
+        <p class="page-subtitle">
+          Manage organizations connected to your employee benefits platform.
+        </p>
       </div>
-    } @else {
-      <table mat-table [dataSource]="companies()">
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let company">{{ company.name }}</td>
-        </ng-container>
-        <ng-container matColumnDef="industry">
-          <th mat-header-cell *matHeaderCellDef>Industry</th>
-          <td mat-cell *matCellDef="let company">{{ company.industry }}</td>
-        </ng-container>
 
-        <ng-container matColumnDef="employeeCount">
-          <th mat-header-cell *matHeaderCellDef>Employees</th>
-          <td mat-cell *matCellDef="let company">{{ company.employeeCount }}</td>
-        </ng-container>
+      <button
+        type="button"
+        mat-flat-button
+        color="primary"
+        class="!rounded-xl"
+        (click)="openDialog()"
+      >
+        <mat-icon>add</mat-icon>
+        <span>New Company</span>
+      </button>
+    </section>
 
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let company">
-            <button mat-icon-button matTooltip="Edit" (click)="openDialog(company)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button matTooltip="Delete" color="warn" (click)="delete(company)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </td>
-        </ng-container>
+    <section class="grid gap-4 md:grid-cols-3">
+      <div class="stat-card">
+        <p class="stat-label">Total Companies</p>
+        <p class="stat-value">{{ total() || companies().length }}</p>
+        <p class="stat-meta">Connected organizations in the system</p>
+      </div>
 
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-      </table>
-      <mat-paginator
-        [length]="total()"
-        [pageSize]="limit()"
-        [pageSizeOptions]="[10, 20, 50]"
-        [pageIndex]="page() - 1"
-        (page)="onPageChange($event)"
-        showFirstLastButtons
-      />
-    }
+      <div class="stat-card">
+        <p class="stat-label">Visible This Page</p>
+        <p class="stat-value">{{ companies().length }}</p>
+        <p class="stat-meta">Currently loaded records</p>
+      </div>
+
+      <div class="stat-card">
+        <p class="stat-label">Average Employees</p>
+        <p class="stat-value">{{ averageEmployees() }}</p>
+        <p class="stat-meta">Approximate employee count per company</p>
+      </div>
+    </section>
+
+    <section class="data-table-shell mt-6">
+      @if (loading()) {
+        <div class="flex items-center justify-center p-12">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      } @else if (!companies().length) {
+        <div class="p-10 text-center">
+          <app-empty-state
+            icon="business"
+            title="No companies found"
+            description="Start by creating your first company record."
+            actionLabel="Create Company"
+            (action)="openDialog()"
+          />
+          <button
+            type="button"
+            mat-flat-button
+            color="primary"
+            class="!mt-4 !rounded-xl"
+            (click)="openDialog()"
+          >
+            <mat-icon>add</mat-icon>
+            <span>Create Company</span>
+          </button>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Industry</th>
+                <th>Employees</th>
+                <th class="!text-right">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (company of companies(); track company.id) {
+                <tr>
+                  <td>
+                    <div class="font-semibold text-slate-900 dark:text-white">
+                      {{ company.name }}
+                    </div>
+                  </td>
+                  <td>{{ company.industry || '—' }}</td>
+                  <td>{{ company.employeeCount || 0 }}</td>
+                  <td>
+                    <div class="flex justify-end gap-2">
+                      <button
+                        mat-icon-button
+                        type="button"
+                        matTooltip="Edit company"
+                        (click)="openDialog(company)"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+
+                      <button
+                        mat-icon-button
+                        type="button"
+                        color="warn"
+                        matTooltip="Delete company"
+                        (click)="delete(company)"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <mat-paginator
+          [length]="total()"
+          [pageSize]="limit()"
+          [pageIndex]="page() - 1"
+          [pageSizeOptions]="[10, 20, 50]"
+          (page)="onPageChange($event)"
+        />
+      }
+    </section>
   `,
-  styles: [
-    `
-      .section-title {
-        font-size: 22px;
-        font-weight: 600;
-        margin: 0 0 20px;
-      }
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-      .page-header h2 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 500;
-      }
-      table {
-        width: 100%;
-      }
-      .spinner-container {
-        display: flex;
-        justify-content: center;
-        padding: 48px;
-      }
-    `,
-  ],
 })
 export class CompaniesComponent implements OnInit {
   private companiesService = inject(CompaniesService);
@@ -117,10 +165,15 @@ export class CompaniesComponent implements OnInit {
   limit = signal(20);
   total = signal(0);
 
-  columns = ['name', 'industry', 'employeeCount', 'actions'];
-
   ngOnInit() {
     this.load();
+  }
+
+  averageEmployees(): string {
+    const list = this.companies();
+    if (!list.length) return '0';
+    const total = list.reduce((sum, c) => sum + (c.employeeCount || 0), 0);
+    return Math.round(total / list.length).toString();
   }
 
   load() {
@@ -137,16 +190,19 @@ export class CompaniesComponent implements OnInit {
       },
     });
   }
+
   onPageChange(event: PageEvent) {
     this.page.set(event.pageIndex + 1);
     this.limit.set(event.pageSize);
     this.load();
   }
+
   openDialog(company?: Company) {
     const dialogRef = this.dialog.open(CompanyDialogComponent, {
       width: '480px',
       data: company ?? null,
     });
+
     dialogRef.afterClosed().subscribe((result) => {
       if (result) this.load();
     });
@@ -160,6 +216,7 @@ export class CompaniesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (!confirmed) return;
+
       this.companiesService.delete(company.id).subscribe({
         next: () => {
           this.snackBar.open(`${company.name} deleted`, 'Close', { duration: 3000 });

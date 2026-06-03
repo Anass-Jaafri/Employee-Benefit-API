@@ -1,0 +1,55 @@
+<div class="page-grid">
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Companies</h2>
+        <p class="card-subtitle">Manage onboarding, plans, and coverage by organization.</p>
+      </div>
+      <button class="primary-btn" type="button">Add company</button>
+    </div>
+
+    <div class="three-col">
+      <div class="card">
+        <p class="card-subtitle">Total companies</p>
+        <h3 style="font-size:2rem;margin:10px 0 0;">42</h3>
+      </div>
+      <div class="card">
+        <p class="card-subtitle">Active plans</p>
+        <h3 style="font-size:2rem;margin:10px 0 0;">39</h3>
+      </div>
+      <div class="card">
+        <p class="card-subtitle">Renewals this month</p>
+        <h3 style="font-size:2rem;margin:10px 0 0;">8</h3>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Sector</th>
+            <th>Employees</th>
+            <th>Plan</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let company of companies">
+            <td><strong>{{ company.name }}</strong></td>
+            <td>{{ company.sector }}</td>
+            <td>{{ company.employees }}</td>
+            <td>{{ company.plan }}</td>
+            <td>
+              <span class="pill" [class.success]="company.status === 'Active'" [class.warning]="company.status === 'Paused'">
+                {{ company.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

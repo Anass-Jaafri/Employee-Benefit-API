@@ -1,0 +1,55 @@
+<div class="page-grid">
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Benefit packages</h2>
+        <p class="card-subtitle">Design and compare plans for each company segment.</p>
+      </div>
+      <button class="primary-btn" type="button">Create package</button>
+    </div>
+
+    <div class="three-col">
+      <article class="card" *ngFor="let package of packages">
+        <span class="pill" [class.info]="package.accent === 'info'" [class.brand]="package.accent === 'brand'" [class.success]="package.accent === 'success'">
+          {{ package.name }}
+        </span>
+        <h3 style="margin:14px 0 8px;font-size:2rem;">{{ package.price }}</h3>
+        <p class="card-subtitle">{{ package.description }}</p>
+        <ul style="margin:18px 0 0;padding-left:18px;color:var(--text);line-height:1.9;">
+          <li *ngFor="let feature of package.features">{{ feature }}</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="two-col">
+    <article class="card">
+      <h3 class="card-title">Coverage mix</h3>
+      <p class="card-subtitle">How packages are distributed across the platform.</p>
+      <div class="stack" style="margin-top:18px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Starter</strong><span>24%</span></div>
+          <div class="progress-line"><span style="width:24%"></span></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Corporate Plus</strong><span>38%</span></div>
+          <div class="progress-line"><span style="width:38%"></span></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Premium Family</strong><span>38%</span></div>
+          <div class="progress-line"><span style="width:38%"></span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h3 class="card-title">Package rules</h3>
+      <p class="card-subtitle">Use these controls to keep offerings aligned with company size and budget.</p>
+      <div class="stack" style="margin-top:18px;">
+        <div class="empty-state">Minimum employees threshold: 10</div>
+        <div class="empty-state">Automatic upgrade suggested at 250 employees</div>
+        <div class="empty-state">Family plan available for premium tiers only</div>
+      </div>
+    </article>
+  </section>
+</div>

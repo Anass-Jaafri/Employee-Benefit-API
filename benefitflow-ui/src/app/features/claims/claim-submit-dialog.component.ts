@@ -30,62 +30,64 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
 
     <mat-dialog-content>
       <form [formGroup]="form">
-        <mat-form-field appearance="outline">
-          <mat-label>Title</mat-label>
-          <input matInput formControlName="title" />
-          @if (form.controls.title.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-          @if (form.controls.title.hasError('whitespace') && form.controls.title.touched) {
-            <mat-error>Cannot be blank or spaces only</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Claim type</mat-label>
-          <mat-select formControlName="claimType">
-            <mat-option value="medical">Medical</mat-option>
-            <mat-option value="gym">Gym</mat-option>
-            <mat-option value="transport">Transport</mat-option>
-            <mat-option value="meal">Meal</mat-option>
-            <mat-option value="other">Other</mat-option>
-          </mat-select>
-          @if (form.controls.claimType.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Benefit package</mat-label>
-          <mat-select formControlName="benefitPackageId">
-            @for (pkg of packages(); track pkg.id) {
-              <mat-option [value]="pkg.id">{{ pkg.name }}</mat-option>
+        <div class="form-body">
+          <mat-form-field appearance="outline">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title" />
+            @if (form.controls.title.hasError('required')) {
+              <mat-error>Required</mat-error>
             }
-          </mat-select>
-          @if (form.controls.benefitPackageId.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-        </mat-form-field>
+            @if (form.controls.title.hasError('whitespace') && form.controls.title.touched) {
+              <mat-error>Cannot be blank or spaces only</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Amount (€)</mat-label>
-          <input matInput type="number" formControlName="amount" />
-          @if (form.controls.amount.hasError('required')) {
-            <mat-error>Required</mat-error>
-          }
-          @if (form.controls.amount.hasError('min')) {
-            <mat-error>Amount must be greater than 0</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="2"></textarea>
+          </mat-form-field>
 
-        @if (error()) {
-          <p class="error-message">{{ error() }}</p>
-        }
+          <mat-form-field appearance="outline">
+            <mat-label>Claim type</mat-label>
+            <mat-select formControlName="claimType">
+              <mat-option value="medical">Medical</mat-option>
+              <mat-option value="gym">Gym</mat-option>
+              <mat-option value="transport">Transport</mat-option>
+              <mat-option value="meal">Meal</mat-option>
+              <mat-option value="other">Other</mat-option>
+            </mat-select>
+            @if (form.controls.claimType.hasError('required')) {
+              <mat-error>Required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Benefit package</mat-label>
+            <mat-select formControlName="benefitPackageId">
+              @for (pkg of packages(); track pkg.id) {
+                <mat-option [value]="pkg.id">{{ pkg.name }}</mat-option>
+              }
+            </mat-select>
+            @if (form.controls.benefitPackageId.hasError('required')) {
+              <mat-error>Required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Amount (€)</mat-label>
+            <input matInput type="number" formControlName="amount" />
+            @if (form.controls.amount.hasError('required')) {
+              <mat-error>Required</mat-error>
+            }
+            @if (form.controls.amount.hasError('min')) {
+              <mat-error>Amount must be greater than 0</mat-error>
+            }
+          </mat-form-field>
+
+          @if (error()) {
+            <p class="error-message">{{ error() }}</p>
+          }
+        </div>
       </form>
     </mat-dialog-content>
 
@@ -106,15 +108,15 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-top: 8px;
+        padding-top: 16px;
       }
+
+      .form-body {
+        margin-top: 6px;
+      }
+
       mat-form-field {
         width: 100%;
-      }
-      .error-message {
-        color: var(--mat-sys-error);
-        font-size: 14px;
-        margin: 0;
       }
     `,
   ],

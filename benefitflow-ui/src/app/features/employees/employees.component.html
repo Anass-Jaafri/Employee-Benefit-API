@@ -1,0 +1,61 @@
+<div class="page-grid">
+  <section class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-card__label"><span>Employees</span><span class="pill brand">LIVE</span></div>
+      <div class="stat-card__value">1,284</div>
+      <div class="stat-card__foot">Up from 1,158 last quarter</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><span>Active members</span><span class="pill success">OK</span></div>
+      <div class="stat-card__value">1,241</div>
+      <div class="stat-card__foot">96.6% active enrollment</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><span>Pending activation</span><span class="pill warning">WAIT</span></div>
+      <div class="stat-card__value">43</div>
+      <div class="stat-card__foot">Mostly new hires</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__label"><span>Coverage gaps</span><span class="pill info">INFO</span></div>
+      <div class="stat-card__value">12</div>
+      <div class="stat-card__foot">Need package review</div>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Employees</h2>
+        <p class="card-subtitle">Roster overview with assigned company and benefit plan.</p>
+      </div>
+      <button class="secondary-btn" type="button">Import CSV</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Package</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees">
+            <td><strong>{{ employee.name }}</strong></td>
+            <td>{{ employee.company }}</td>
+            <td>{{ employee.role }}</td>
+            <td>{{ employee.package }}</td>
+            <td>
+              <span class="pill" [class.success]="employee.status === 'Active'" [class.warning]="employee.status === 'Pending'">
+                {{ employee.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

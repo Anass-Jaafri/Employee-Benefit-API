@@ -1,9 +1,7 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 html {
   height: 100%;
@@ -20,22 +18,31 @@ html {
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
   margin: 0;
-  height: 100%;
+  min-height: 100%;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  background: #f1f5f9;
+  color: #0f172a;
 }
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 .snack-error {
   --mdc-snackbar-container-color: #c62828;
   --mdc-snackbar-supporting-text-color: #ffffff;
@@ -46,4 +53,278 @@ body {
   --mdc-snackbar-container-color: #e65100;
   --mdc-snackbar-supporting-text-color: #ffffff;
   --mat-snack-bar-button-color: #ffe0b2;
+}
+
+.page-shell {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+
+.page-header {
+  @apply mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between;
+}
+
+.page-title {
+  @apply text-2xl font-bold tracking-tight text-slate-900 dark:text-white;
+}
+
+.page-subtitle {
+  @apply text-sm text-slate-500 dark:text-slate-400;
+}
+
+.content-card {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+
+.data-table-shell {
+  @apply overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+
+.table-scroll {
+  @apply overflow-x-auto;
+}
+
+.app-table {
+  @apply min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800;
+}
+
+.app-table thead {
+  @apply bg-slate-50 dark:bg-slate-950;
+}
+
+.app-table th {
+  @apply px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+}
+
+.app-table td {
+  @apply whitespace-nowrap px-6 py-4 text-slate-700 dark:text-slate-200;
+}
+
+.app-table tbody tr {
+  @apply border-b border-slate-100 dark:border-slate-800 last:border-b-0;
+}
+
+.app-table tbody tr:hover {
+  @apply bg-slate-50 dark:bg-slate-800/40;
+}
+
+.stat-card {
+  @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+
+.stat-label {
+  @apply text-sm font-medium text-slate-500 dark:text-slate-400;
+}
+
+.stat-value {
+  @apply mt-2 text-3xl font-bold text-slate-900 dark:text-white;
+}
+
+.stat-meta {
+  @apply mt-2 text-sm text-emerald-600 dark:text-emerald-400;
+}
+
+.dashboard-grid {
+  @apply grid gap-4 md:grid-cols-2 xl:grid-cols-4;
+}
+
+.quick-link {
+  @apply rounded-2xl border border-slate-200 px-4 py-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800;
+}
+
+.soft-panel {
+  @apply rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-800/50;
+}
+
+.mat-mdc-paginator {
+  @apply border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900;
+}
+.dark .mat-mdc-icon-button {
+  color: #cbd5e1;
+}
+
+.dark .mat-mdc-icon-button:hover {
+  color: #ffffff;
+}
+
+/* ===== Angular Material dialog dark mode ===== */
+.dark .cdk-overlay-backdrop.cdk-overlay-dark-backdrop {
+  background: rgba(2, 6, 23, 0.72);
+}
+
+.dark .mat-mdc-dialog-surface {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #1e293b;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
+.dark .mat-mdc-dialog-title,
+.dark [mat-dialog-title] {
+  color: #f8fafc !important;
+}
+
+.dark .mat-mdc-dialog-content,
+.dark [mat-dialog-content] {
+  color: #cbd5e1 !important;
+}
+
+.dark .mat-mdc-dialog-actions,
+.dark [mat-dialog-actions] {
+  border-top: 1px solid #1e293b;
+}
+
+/* Form fields inside dialogs */
+.dark .mat-mdc-form-field {
+  --mdc-filled-text-field-container-color: #0f172a;
+  --mdc-filled-text-field-focus-active-indicator-color: #38bdf8;
+  --mdc-filled-text-field-active-indicator-color: #334155;
+  --mdc-filled-text-field-hover-active-indicator-color: #475569;
+  --mdc-filled-text-field-input-text-color: #f8fafc;
+  --mdc-filled-text-field-label-text-color: #94a3b8;
+  --mdc-filled-text-field-focus-label-text-color: #7dd3fc;
+  --mdc-filled-text-field-hover-label-text-color: #cbd5e1;
+
+  --mdc-outlined-text-field-input-text-color: #f8fafc;
+  --mdc-outlined-text-field-label-text-color: #94a3b8;
+  --mdc-outlined-text-field-focus-label-text-color: #7dd3fc;
+  --mdc-outlined-text-field-hover-label-text-color: #cbd5e1;
+  --mdc-outlined-text-field-outline-color: #334155;
+  --mdc-outlined-text-field-hover-outline-color: #475569;
+  --mdc-outlined-text-field-focus-outline-color: #38bdf8;
+  --mdc-outlined-text-field-caret-color: #38bdf8;
+}
+
+.dark .mat-mdc-input-element,
+.dark .mat-mdc-select-value-text,
+.dark .mat-mdc-select-min-line {
+  color: #f8fafc !important;
+}
+
+.dark .mat-mdc-form-field .mat-mdc-floating-label,
+.dark .mat-mdc-form-field .mdc-floating-label {
+  color: #94a3b8 !important;
+}
+
+.dark .mat-mdc-form-field-subscript-wrapper,
+.dark .mat-mdc-form-field-error,
+.dark .mat-mdc-form-field-hint {
+  color: #fca5a5 !important;
+}
+
+/* Select panel */
+.dark .mat-mdc-select-panel {
+  background: #0f172a !important;
+  border: 1px solid #1e293b;
+}
+
+.dark .mat-mdc-option {
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-mdc-option:hover,
+.dark .mat-mdc-option.mdc-list-item--selected,
+.dark .mat-mdc-option.mat-mdc-option-active {
+  background: #1e293b !important;
+}
+
+/* Datepicker popup */
+.dark .mat-datepicker-content,
+.dark .mat-mdc-datepicker-content {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #1e293b;
+}
+
+.dark .mat-calendar {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-calendar-body-cell-content,
+.dark .mat-calendar-body-label,
+.dark .mat-calendar-table-header th,
+.dark .mat-calendar-period-button,
+.dark .mat-calendar-previous-button,
+.dark .mat-calendar-next-button {
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-calendar-body-selected {
+  background-color: #0284c7 !important;
+  color: white !important;
+}
+
+/* Checkbox */
+.dark .mat-mdc-checkbox label {
+  color: #e2e8f0 !important;
+}
+
+/* Buttons inside dialogs */
+.dark .mat-mdc-dialog-actions .mat-mdc-button {
+  color: #cbd5e1 !important;
+}
+
+.dark .mat-mdc-dialog-actions .mat-mdc-outlined-button {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-mdc-dialog-actions .mat-mdc-unelevated-button,
+.dark .mat-mdc-dialog-actions .mat-mdc-raised-button {
+  color: white !important;
+}
+
+/* Spinner */
+.dark .mat-mdc-progress-spinner circle,
+.dark .mat-mdc-spinner circle {
+  stroke: #38bdf8 !important;
+}
+
+.dark .pkg-name {
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark .claim-summary {
+  border-color: #334155 !important;
+  color: black !important;
+}
+/* ===== Angular Material paginator dark mode ===== */
+.dark .mat-mdc-paginator {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+  border-top: 1px solid #1e293b;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-paginator-page-size-label,
+.dark .mat-mdc-paginator .mat-mdc-paginator-range-label {
+  color: #cbd5e1 !important;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-icon-button {
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-icon-button[disabled] {
+  color: #475569 !important;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-select-value,
+.dark .mat-mdc-paginator .mat-mdc-select-arrow,
+.dark .mat-mdc-paginator .mat-mdc-select-min-line {
+  color: #e2e8f0 !important;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.dark .mat-mdc-paginator .mat-mdc-text-field-wrapper {
+  background-color: #1e293b !important;
+}
+
+.dark .mat-mdc-paginator .mdc-notched-outline__leading,
+.dark .mat-mdc-paginator .mdc-notched-outline__notch,
+.dark .mat-mdc-paginator .mdc-notched-outline__trailing {
+  border-color: #334155 !important;
 }

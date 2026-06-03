@@ -1,452 +1,415 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-
 import { AuthService } from '../../core/services/auth.service';
 import { Profile } from '../../shared/models';
 import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.validator';
 
 @Component({
   selector: 'app-profile',
+  standalone: true,
   imports: [
     ReactiveFormsModule,
     TitleCasePipe,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatDividerModule,
     MatProgressSpinnerModule,
   ],
   template: `
-    <div class="profile-wrapper">
-      @if (loading()) {
-        <div class="loading-center"><mat-spinner diameter="48" /></div>
-      } @else {
-        <!-- Avatar header -->
-        <div class="profile-header">
-          <div class="avatar">{{ initials() }}</div>
-          <div class="header-info">
-            <h2 class="display-name">
+    @if (loading()) {
+      <div class="content-card flex items-center justify-center p-12">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else {
+      <section class="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+        <aside class="content-card">
+          <div class="flex flex-col items-center text-center">
+            <div
+              class="flex h-24 w-24 items-center justify-center rounded-full bg-sky-100 text-3xl font-bold text-sky-700"
+            >
+              {{ initials() }}
+            </div>
+
+            <h1 class="mt-4 text-2xl font-bold text-slate-900 dark:text-white">
               @if (isAdmin()) {
                 Admin
               } @else {
                 {{ profile()?.firstName }} {{ profile()?.lastName }}
               }
-            </h2>
-            <span class="role-badge">{{ profile()?.role | titlecase }}</span>
+            </h1>
+
+            <p class="mt-1 text-sm text-slate-500 dark:text-white">
+              {{ profile()?.role | titlecase }}
+            </p>
+
             @if (!isAdmin()) {
-              <span class="jobTitle">{{ profile()?.jobTitle }}</span>
+              <p class="mt-1 text-sm text-slate-500 dark:text-white">
+                {{ profile()?.jobTitle || '—' }}
+              </p>
               @if (profile()?.company) {
-                <span class="company-name">{{ profile()!.company!.name }}</span>
+                <p class="mt-1 text-sm text-slate-500 dark:text-white">
+                  {{ profile()?.company?.name }}
+                </p>
               }
             }
           </div>
-        </div>
 
-        <div class="cards-layout">
-          <!-- Personal info -->
-          <mat-card>
-            <mat-card-header>
-              <mat-icon mat-card-avatar>person</mat-icon>
-              <mat-card-title>Personal Information</mat-card-title>
-            </mat-card-header>
+          <div class="mt-8 space-y-4 border-t border-slate-200 pt-6">
+            <div>
+              <p
+                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-white"
+              >
+                Email
+              </p>
+              <p class="mt-1 text-sm font-medium text-slate-800 dark:text-white">
+                {{ profile()?.email }}
+              </p>
+            </div>
 
-            <mat-card-content>
-              <form [formGroup]="profileForm" (ngSubmit)="submitProfile()">
-                <!-- Name fields — not applicable for admin (no employee record) -->
-                @if (!isAdmin()) {
-                  <div class="name-row">
-                    <mat-form-field appearance="outline">
-                      <mat-label>First name</mat-label>
-                      <input matInput formControlName="firstName" />
-                      @if (
-                        profileForm.controls.firstName.hasError('required') &&
-                        profileForm.controls.firstName.touched
-                      ) {
-                        <mat-error>First name is required</mat-error>
-                      }
-                      @if (
-                        profileForm.controls.firstName.hasError('whitespace') &&
-                        profileForm.controls.firstName.touched
-                      ) {
-                        <mat-error>Cannot be blank or spaces only</mat-error>
-                      }
-                    </mat-form-field>
+            <div>
+              <p
+                class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-white"
+              >
+                Role
+              </p>
+              <p class="mt-1 text-sm font-medium text-slate-800 dark:text-white">
+                {{ profile()?.role | titlecase }}
+              </p>
+            </div>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>Last name</mat-label>
-                      <input matInput formControlName="lastName" />
-                      @if (
-                        profileForm.controls.lastName.hasError('required') &&
-                        profileForm.controls.lastName.touched
-                      ) {
-                        <mat-error>Last name is required</mat-error>
-                      }
-                      @if (
-                        profileForm.controls.lastName.hasError('whitespace') &&
-                        profileForm.controls.lastName.touched
-                      ) {
-                        <mat-error>Cannot be blank or spaces only</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
+            @if (!isAdmin()) {
+              <div>
+                <p
+                  class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-white"
+                >
+                  Status
+                </p>
+                <p class="mt-1 text-sm font-medium text-slate-800 dark:text-white">
+                  {{ profile()?.status | titlecase }}
+                </p>
+              </div>
 
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Job title</mat-label>
-                    <input matInput formControlName="jobTitle" />
-                  </mat-form-field>
-                  @if (
-                    profileForm.controls.jobTitle.hasError('whitespace') &&
-                    profileForm.controls.jobTitle.touched
-                  ) {
-                    <mat-error>Cannot be blank or spaces only</mat-error>
-                  }
-                }
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Email</mat-label>
-                  <input matInput type="email" formControlName="email" />
-                  @if (
-                    profileForm.controls.email.hasError('required') &&
-                    profileForm.controls.email.touched
-                  ) {
-                    <mat-error>Email is required</mat-error>
-                  }
-                  @if (
-                    profileForm.controls.email.hasError('email') &&
-                    profileForm.controls.email.touched
-                  ) {
-                    <mat-error>Enter a valid email</mat-error>
-                  }
-                  @if (
-                    profileForm.controls.email.hasError('whitespace') &&
-                    profileForm.controls.email.touched
-                  ) {
-                    <mat-error>Cannot be blank or spaces only</mat-error>
-                  }
-                </mat-form-field>
-
-                <!-- Read-only fields -->
-                <div class="readonly-row">
-                  <div class="readonly-field">
-                    <span class="readonly-label">Role</span>
-                    <span class="readonly-value">{{ profile()?.role | titlecase }}</span>
-                  </div>
-                  @if (!isAdmin()) {
-                    <div class="readonly-field">
-                      <span class="readonly-label">Status</span>
-                      <span class="readonly-value">{{ profile()?.status | titlecase }}</span>
-                    </div>
-                    @if (profile()?.company) {
-                      <div class="readonly-field">
-                        <span class="readonly-label">Company</span>
-                        <span class="readonly-value">{{ profile()!.company!.name }}</span>
-                      </div>
-                    }
-                  }
-                </div>
-
-                @if (profileSuccess()) {
-                  <p class="success-msg">{{ profileSuccess() }}</p>
-                }
-                @if (profileError()) {
-                  <p class="error-msg">{{ profileError() }}</p>
-                }
-
-                <div class="form-actions">
-                  <button
-                    mat-raised-button
-                    color="primary"
-                    type="submit"
-                    [disabled]="profileLoading()"
+              @if (profile()?.company) {
+                <div>
+                  <p
+                    class="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-white"
                   >
-                    @if (profileLoading()) {
-                      <mat-spinner diameter="20" />
-                    } @else {
-                      Save changes
-                    }
-                  </button>
+                    Company
+                  </p>
+                  <p class="mt-1 text-sm font-medium text-slate-800 dark:text-white">
+                    {{ profile()?.company?.name }}
+                  </p>
                 </div>
-              </form>
-            </mat-card-content>
-          </mat-card>
+              }
+            }
+          </div>
+        </aside>
 
-          <!-- Change password -->
-          <mat-card>
-            <mat-card-header>
-              <mat-icon mat-card-avatar>lock</mat-icon>
-              <mat-card-title>Change Password</mat-card-title>
-            </mat-card-header>
+        <div class="space-y-6">
+          <section class="content-card">
+            <div class="mb-6">
+              <h2 class="text-xl font-bold text-slate-900 dark:text-white">Personal Information</h2>
+              <p class="mt-1 text-sm text-slate-500 dark:text-white">
+                Update your identity and account details.
+              </p>
+            </div>
 
-            <mat-card-content>
-              <form [formGroup]="passwordForm" (ngSubmit)="submitPassword()">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Current password</mat-label>
+            <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-5">
+              @if (!isAdmin()) {
+                <div class="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                      >First name</label
+                    >
+                    <input
+                      type="text"
+                      formControlName="firstName"
+                      class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    />
+                    @if (
+                      profileForm.controls.firstName.touched &&
+                      profileForm.controls.firstName.invalid
+                    ) {
+                      <p class="mt-2 text-sm text-red-600">
+                        @if (profileForm.controls.firstName.hasError('required')) {
+                          First name is required
+                        } @else if (profileForm.controls.firstName.hasError('whitespace')) {
+                          Cannot be blank or spaces only
+                        }
+                      </p>
+                    }
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                      >Last name</label
+                    >
+                    <input
+                      type="text"
+                      formControlName="lastName"
+                      class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                    />
+                    @if (
+                      profileForm.controls.lastName.touched && profileForm.controls.lastName.invalid
+                    ) {
+                      <p class="mt-2 text-sm text-red-600">
+                        @if (profileForm.controls.lastName.hasError('required')) {
+                          Last name is required
+                        } @else if (profileForm.controls.lastName.hasError('whitespace')) {
+                          Cannot be blank or spaces only
+                        }
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                    >Job title</label
+                  >
+
+                  <div
+                    class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  >
+                    {{ profile()?.jobTitle | titlecase }}
+                  </div>
+                </div>
+              }
+
+              <div class="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                    >Email</label
+                  >
                   <input
-                    matInput
+                    type="email"
+                    formControlName="email"
+                    class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  />
+                  @if (profileForm.controls.email.touched && profileForm.controls.email.invalid) {
+                    <p
+                      class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                    >
+                      @if (profileForm.controls.email.hasError('required')) {
+                        Email is required
+                      } @else if (profileForm.controls.email.hasError('email')) {
+                        Enter a valid email
+                      } @else if (profileForm.controls.email.hasError('whitespace')) {
+                        Cannot be blank or spaces only
+                      }
+                    </p>
+                  }
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                    >Role</label
+                  >
+                  <div
+                    class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  >
+                    {{ profile()?.role | titlecase }}
+                  </div>
+                </div>
+              </div>
+
+              @if (profileSuccess()) {
+                <div
+                  class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                >
+                  {{ profileSuccess() }}
+                </div>
+              }
+
+              @if (profileError()) {
+                <div
+                  class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {{ profileError() }}
+                </div>
+              }
+
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  mat-flat-button
+                  color="primary"
+                  class="!rounded-xl"
+                  [disabled]="profileLoading()"
+                >
+                  @if (profileLoading()) {
+                    <span>Saving...</span>
+                  } @else {
+                    <span>Save changes</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="content-card">
+            <div class="mb-6 flex items-center gap-3">
+              <div class="rounded-2xl bg-slate-100 p-3 text-slate-700">
+                <mat-icon>lock</mat-icon>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-slate-900">Change Password</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-white">
+                  Keep your account secure by using a strong password.
+                </p>
+              </div>
+            </div>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="space-y-5">
+              <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                  >Current password</label
+                >
+                <div class="relative">
+                  <input
                     [type]="showCurrent() ? 'text' : 'password'"
                     formControlName="currentPassword"
+                    class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 pr-12 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"
                   />
                   <button
-                    mat-icon-button
-                    matSuffix
                     type="button"
+                    class="absolute inset-y-0 right-3 inline-flex items-center text-slate-500"
                     (click)="showCurrent.set(!showCurrent())"
                   >
                     <mat-icon>{{ showCurrent() ? 'visibility_off' : 'visibility' }}</mat-icon>
                   </button>
-                  @if (
-                    passwordForm.controls.currentPassword.hasError('required') &&
-                    passwordForm.controls.currentPassword.touched
-                  ) {
-                    <mat-error>Current password is required</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-divider class="form-divider" />
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>New password</mat-label>
-                  <input
-                    matInput
-                    [type]="showNew() ? 'text' : 'password'"
-                    formControlName="newPassword"
-                  />
-                  <button mat-icon-button matSuffix type="button" (click)="showNew.set(!showNew())">
-                    <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
-                  </button>
-                  @if (
-                    passwordForm.controls.newPassword.hasError('required') &&
-                    passwordForm.controls.newPassword.touched
-                  ) {
-                    <mat-error>New password is required</mat-error>
-                  }
-                  @if (
-                    passwordForm.controls.newPassword.hasError('minlength') &&
-                    passwordForm.controls.newPassword.touched
-                  ) {
-                    <mat-error>Password must be at least 8 characters</mat-error>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Confirm new password</mat-label>
-                  <input
-                    matInput
-                    [type]="showNew() ? 'text' : 'password'"
-                    formControlName="confirmPassword"
-                  />
-                  @if (
-                    passwordForm.controls.confirmPassword.hasError('required') &&
-                    passwordForm.controls.confirmPassword.touched
-                  ) {
-                    <mat-error>Please confirm your new password</mat-error>
-                  }
-                  @if (
-                    passwordForm.controls.confirmPassword.hasError('mismatch') &&
-                    passwordForm.controls.confirmPassword.touched
-                  ) {
-                    <mat-error>Passwords do not match</mat-error>
-                  }
-                </mat-form-field>
-
-                @if (passwordSuccess()) {
-                  <p class="success-msg">{{ passwordSuccess() }}</p>
-                }
-                @if (passwordError()) {
-                  <p class="error-msg">{{ passwordError() }}</p>
-                }
-
-                <div class="form-actions">
-                  <button
-                    mat-raised-button
-                    color="primary"
-                    type="submit"
-                    [disabled]="passwordLoading()"
-                  >
-                    @if (passwordLoading()) {
-                      <mat-spinner diameter="20" />
-                    } @else {
-                      Change password
-                    }
-                  </button>
                 </div>
-              </form>
-            </mat-card-content>
-          </mat-card>
+              </div>
+
+              <div class="grid gap-5 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                    >New password</label
+                  >
+                  <div class="relative">
+                    <input
+                      [type]="showNew() ? 'text' : 'password'"
+                      formControlName="newPassword"
+                      class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 pr-12 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                    />
+                    <button
+                      type="button"
+                      class="absolute inset-y-0 right-3 inline-flex items-center text-slate-500"
+                      (click)="showNew.set(!showNew())"
+                    >
+                      <mat-icon>{{ showNew() ? 'visibility_off' : 'visibility' }}</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white"
+                    >Confirm password</label
+                  >
+                  <input
+                    type="password"
+                    formControlName="confirmPassword"
+                    class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                  />
+                </div>
+              </div>
+
+              @if (
+                passwordForm.controls.currentPassword.touched &&
+                passwordForm.controls.currentPassword.hasError('required')
+              ) {
+                <p class="text-sm text-red-600">Current password is required</p>
+              }
+              @if (
+                passwordForm.controls.newPassword.touched &&
+                passwordForm.controls.newPassword.invalid
+              ) {
+                <p class="text-sm text-red-600">
+                  @if (passwordForm.controls.newPassword.hasError('required')) {
+                    New password is required
+                  } @else if (passwordForm.controls.newPassword.hasError('minlength')) {
+                    Password must be at least 8 characters
+                  }
+                </p>
+              }
+              @if (
+                passwordForm.controls.confirmPassword.touched &&
+                passwordForm.controls.confirmPassword.invalid
+              ) {
+                <p class="text-sm text-red-600">
+                  @if (passwordForm.controls.confirmPassword.hasError('required')) {
+                    Please confirm your new password
+                  } @else if (passwordForm.controls.confirmPassword.hasError('mismatch')) {
+                    Passwords do not match
+                  }
+                </p>
+              }
+
+              @if (passwordSuccess()) {
+                <div
+                  class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+                >
+                  {{ passwordSuccess() }}
+                </div>
+              }
+
+              @if (passwordError()) {
+                <div
+                  class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {{ passwordError() }}
+                </div>
+              }
+
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  mat-flat-button
+                  color="primary"
+                  class="!rounded-xl"
+                  [disabled]="passwordLoading()"
+                >
+                  @if (passwordLoading()) {
+                    <span>Updating...</span>
+                  } @else {
+                    <span>Change password</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
-      }
-    </div>
+      </section>
+    }
   `,
-  styles: [
-    `
-      .profile-wrapper {
-        padding: 24px;
-        max-width: 900px;
-        margin: 0 auto;
-      }
-      .loading-center {
-        display: flex;
-        justify-content: center;
-        padding: 80px;
-      }
-
-      .profile-header {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        margin-bottom: 32px;
-      }
-      .avatar {
-        width: 72px;
-        height: 72px;
-        border-radius: 50%;
-        background: #1976d2;
-        color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 26px;
-        font-weight: 700;
-        flex-shrink: 0;
-      }
-      .display-name {
-        font-size: 22px;
-        font-weight: 600;
-        margin: 0 0 6px;
-      }
-      .role-badge {
-        display: inline-block;
-        padding: 2px 10px;
-        border-radius: 12px;
-        background: #e3f2fd;
-        color: #1565c0;
-        font-size: 12px;
-        font-weight: 500;
-        margin-right: 8px;
-      }
-      .company-name {
-        font-size: 13px;
-        color: rgba(0, 0, 0, 0.55);
-      }
-      .jobTitle {
-        font-size: 13px;
-        color: rgba(0, 0, 0, 0.55);
-        padding: 2px 10px;
-      }
-
-      .cards-layout {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        align-items: start;
-      }
-      @media (max-width: 700px) {
-        .cards-layout {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .name-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-      }
-      .name-row mat-form-field {
-        width: 100%;
-      }
-      .full-width {
-        width: 100%;
-      }
-
-      .readonly-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 24px;
-        margin: 8px 0 16px;
-      }
-      .readonly-field {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .readonly-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        color: rgba(0, 0, 0, 0.45);
-        letter-spacing: 0.5px;
-      }
-      .readonly-value {
-        font-size: 14px;
-        font-weight: 500;
-      }
-
-      .form-divider {
-        margin: 8px 0 16px;
-      }
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 8px;
-      }
-
-      .success-msg {
-        color: #2e7d32;
-        background: #e8f5e9;
-        padding: 10px 14px;
-        border-radius: 4px;
-        font-size: 14px;
-        margin: 0 0 12px;
-      }
-      .error-msg {
-        color: #c62828;
-        background: #ffebee;
-        padding: 10px 14px;
-        border-radius: 4px;
-        font-size: 14px;
-        margin: 0 0 12px;
-      }
-    `,
-  ],
 })
 export class ProfileComponent implements OnInit {
+  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-
-  readonly isAdmin = computed(() => this.authService.currentUser()?.role === 'admin');
 
   loading = signal(true);
-  profile = signal<Profile | null>(null);
   profileLoading = signal(false);
   passwordLoading = signal(false);
+
   profileSuccess = signal<string | null>(null);
   profileError = signal<string | null>(null);
   passwordSuccess = signal<string | null>(null);
   passwordError = signal<string | null>(null);
+
   showCurrent = signal(false);
   showNew = signal(false);
 
-  readonly initials = computed(() => {
-    if (this.isAdmin()) return 'A';
-    const first = this.profile()?.firstName;
-    const last = this.profile()?.lastName;
-    return `${first?.charAt(0) ?? '?'}${last?.charAt(0) ?? ''}`.toUpperCase();
-  });
+  profile = signal<Profile | null>(null);
+  readonly isAdmin = computed(() => this.profile()?.role === 'admin');
 
   profileForm = this.fb.group({
     firstName: ['', [Validators.required, noWhitespaceValidator]],
     lastName: ['', [Validators.required, noWhitespaceValidator]],
+    jobTitle: ['', [noWhitespaceValidator]],
     email: ['', [Validators.required, Validators.email, noWhitespaceValidator]],
-    jobTitle: ['', noWhitespaceValidator],
   });
 
   passwordForm = this.fb.group({
@@ -455,55 +418,58 @@ export class ProfileComponent implements OnInit {
     confirmPassword: ['', Validators.required],
   });
 
+  initials = computed(() => {
+    const p = this.profile();
+    if (!p) return 'U';
+    if (p.role === 'admin') return 'A';
+    return `${p.firstName?.[0] ?? ''}${p.lastName?.[0] ?? ''}`.toUpperCase() || 'U';
+  });
+
   ngOnInit(): void {
-    this.authService.getProfile().subscribe({
-      next: (profile) => {
-        this.profile.set(profile);
-
-        // Patch only what exists — admin has no firstName/lastName
-        this.profileForm.patchValue({
-          firstName: profile.firstName ?? '',
-          lastName: profile.lastName ?? '',
-          email: profile.email,
-          jobTitle: profile.jobTitle ?? '',
-        });
-
-        // Admin: name fields are irrelevant — no validators
-        if (this.isAdmin()) {
-          this.profileForm.controls.firstName.clearValidators();
-          this.profileForm.controls.lastName.clearValidators();
-          this.profileForm.controls.firstName.updateValueAndValidity();
-          this.profileForm.controls.lastName.updateValueAndValidity();
-        }
-
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
-
     this.passwordForm.controls.newPassword.valueChanges.subscribe(() =>
       this.validatePasswordMatch(),
     );
     this.passwordForm.controls.confirmPassword.valueChanges.subscribe(() =>
       this.validatePasswordMatch(),
     );
+    this.loadProfile();
   }
 
   private validatePasswordMatch(): void {
-    const newPass = this.passwordForm.controls.newPassword.value;
+    const password = this.passwordForm.controls.newPassword.value;
     const confirm = this.passwordForm.controls.confirmPassword.value;
     const control = this.passwordForm.controls.confirmPassword;
 
-    if (newPass && confirm && newPass !== confirm) {
-      control.setErrors({ ...control.errors, mismatch: true });
+    if (password && confirm && password !== confirm) {
+      control.setErrors({ ...(control.errors ?? {}), mismatch: true });
     } else {
-      const errors = { ...control.errors };
+      const errors = { ...(control.errors ?? {}) };
       delete errors['mismatch'];
       control.setErrors(Object.keys(errors).length ? errors : null);
     }
   }
 
-  submitProfile(): void {
+  loadProfile(): void {
+    this.loading.set(true);
+    this.auth.getProfile().subscribe({
+      next: (profile) => {
+        this.profile.set(profile);
+        this.profileForm.patchValue({
+          firstName: profile.firstName ?? '',
+          lastName: profile.lastName ?? '',
+          jobTitle: profile.jobTitle ?? '',
+          email: profile.email ?? '',
+        });
+        this.loading.set(false);
+      },
+      error: () => {
+        this.profileError.set('Failed to load profile');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  saveProfile(): void {
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
       return;
@@ -513,33 +479,29 @@ export class ProfileComponent implements OnInit {
     this.profileSuccess.set(null);
     this.profileError.set(null);
 
-    const { firstName, lastName, email, jobTitle } = this.profileForm.getRawValue();
+    const raw = this.profileForm.getRawValue();
 
-    // Admin only sends email — backend ignores name fields when no employee exists
-    const payload = this.isAdmin()
-      ? { email: email! }
-      : {
-          firstName: firstName!,
-          lastName: lastName!,
-          email: email!,
-          jobTitle: jobTitle || undefined,
-        };
+    const payload = {
+      firstName: raw.firstName ?? undefined,
+      lastName: raw.lastName ?? undefined,
+      email: raw.email ?? undefined,
+      jobTitle: raw.jobTitle ?? undefined,
+    };
 
-    this.authService.updateProfile(payload).subscribe({
+    this.auth.updateProfile(payload).subscribe({
       next: (updated) => {
         this.profile.set(updated);
+        this.profileSuccess.set('Profile updated successfully.');
         this.profileLoading.set(false);
-        this.profileSuccess.set('Profile updated successfully');
-        setTimeout(() => this.profileSuccess.set(null), 3000);
       },
       error: (err) => {
+        this.profileError.set(err.error?.message ?? 'Failed to update profile.');
         this.profileLoading.set(false);
-        this.profileError.set(err.error?.message ?? 'Failed to update profile');
       },
     });
   }
 
-  submitPassword(): void {
+  changePassword(): void {
     if (this.passwordForm.invalid) {
       this.passwordForm.markAllAsTouched();
       return;
@@ -551,21 +513,24 @@ export class ProfileComponent implements OnInit {
 
     const { currentPassword, newPassword } = this.passwordForm.getRawValue();
 
-    this.authService
+    this.auth
       .changePassword({
         currentPassword: currentPassword!,
         newPassword: newPassword!,
       })
       .subscribe({
         next: () => {
+          this.passwordSuccess.set('Password updated successfully.');
           this.passwordLoading.set(false);
-          this.passwordSuccess.set('Password changed successfully');
-          this.passwordForm.reset();
-          setTimeout(() => this.passwordSuccess.set(null), 3000);
+          this.passwordForm.reset({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+          });
         },
         error: (err) => {
+          this.passwordError.set(err.error?.message ?? 'Failed to change password.');
           this.passwordLoading.set(false);
-          this.passwordError.set(err.error?.message ?? 'Failed to change password');
         },
       });
   }

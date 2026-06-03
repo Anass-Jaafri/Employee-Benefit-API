@@ -135,15 +135,21 @@ import { noWhitespaceValidator } from '../../shared/validators/noWhitespace.vali
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-top: 8px;
+        padding-top: 16px;
       }
+
       mat-form-field {
         width: 100%;
       }
+
       .row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
+      }
+
+      .row:first-child {
+        margin-top: 6px;
       }
     `,
   ],

@@ -1,0 +1,114 @@
+<div class="page-grid">
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <div class="stat-card__label">
+        <span>{{ stat.label }}</span>
+        <span class="pill" [class.brand]="stat.color === 'brand'" [class.info]="stat.color === 'info'" [class.success]="stat.color === 'success'" [class.warning]="stat.color === 'warning'">
+          KPI
+        </span>
+      </div>
+      <div class="stat-card__value">{{ stat.value }}</div>
+      <div class="stat-card__foot">{{ stat.foot }}</div>
+    </article>
+  </section>
+
+  <section class="two-col">
+    <article class="hero-card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Operational summary</h2>
+          <p class="card-subtitle">A quick view of the current benefits workload.</p>
+        </div>
+        <button class="primary-btn" type="button">Export report</button>
+      </div>
+
+      <div class="three-col">
+        <div class="card">
+          <p class="card-subtitle">Claims processed</p>
+          <h3 style="margin:10px 0 6px;font-size:2rem;">318</h3>
+          <p class="card-subtitle">This month</p>
+        </div>
+        <div class="card">
+          <p class="card-subtitle">Average response</p>
+          <h3 style="margin:10px 0 6px;font-size:2rem;">4.2h</h3>
+          <p class="card-subtitle">Across all requests</p>
+        </div>
+        <div class="card">
+          <p class="card-subtitle">Satisfaction</p>
+          <h3 style="margin:10px 0 6px;font-size:2rem;">98%</h3>
+          <p class="card-subtitle">Employee feedback</p>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;" class="stack">
+        <div *ngFor="let item of distribution">
+          <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;">
+            <strong>{{ item.label }}</strong>
+            <span class="card-subtitle">{{ item.value }}%</span>
+          </div>
+          <div class="progress-line"><span [style.width.%]="item.value"></span></div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Latest activity</h2>
+          <p class="card-subtitle">What happened in the platform recently.</p>
+        </div>
+      </div>
+
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let activity of activities">
+          <span class="activity-dot" [style.background]="activity.tone === 'success' ? 'var(--brand-2)' : activity.tone === 'info' ? 'var(--info)' : 'var(--brand)'"></span>
+          <div>
+            <strong>{{ activity.title }}</strong>
+            <p class="card-subtitle" style="margin-top:6px;">{{ activity.detail }}</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="table-card">
+    <div class="card-header">
+      <div>
+        <h2 class="card-title">Recent claims</h2>
+        <p class="card-subtitle">Most recent requests across all companies.</p>
+      </div>
+      <button class="secondary-btn" type="button">View all claims</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Company</th>
+            <th>Benefit type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let claim of recentClaims">
+            <td>{{ claim.name }}</td>
+            <td>{{ claim.company }}</td>
+            <td>{{ claim.type }}</td>
+            <td>{{ claim.amount }}</td>
+            <td>
+              <span class="pill"
+                [class.success]="claim.status === 'Approved'"
+                [class.warning]="claim.status === 'In review'"
+                [class.danger]="claim.status === 'Rejected'"
+              >
+                {{ claim.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,81 @@
+<div
+  class="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+  [class.hidden]="!open"
+  (click)="closeSidebar.emit()"
+></div>
+
+<aside
+  class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 dark:border-slate-800 dark:bg-slate-900 lg:static lg:z-auto lg:translate-x-0"
+  [class.translate-x-0]="open"
+>
+  <div
+    class="flex items-center justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800"
+  >
+    <div>
+      <a
+        routerLink="/dashboard/home"
+        class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+      >
+        BenefitFlow
+      </a>
+      <p
+        class="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500"
+      >
+        Employee Benefits
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 lg:hidden"
+      (click)="closeSidebar.emit()"
+      aria-label="Close sidebar"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="border-b border-slate-200 px-6 py-5 dark:border-slate-800">
+    <div class="flex items-center gap-3">
+      <div
+        class="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 font-bold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+      >
+        {{ currentUser()?.email?.charAt(0)?.toUpperCase() || 'U' }}
+      </div>
+
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+          {{ currentUser()?.email || 'Authenticated user' }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          {{ currentUser()?.role | titlecase }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 space-y-2 overflow-y-auto px-4 py-4">
+    @for (item of navItems(); track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900"
+        class="flex w-full items-center gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+        (click)="onNavigate()"
+      >
+        <mat-icon class="!text-[20px]">{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+    <button
+      type="button"
+      class="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200"
+      (click)="logout()"
+    >
+      <mat-icon class="!text-[20px]">logout</mat-icon>
+      <span>Sign out</span>
+    </button>
+  </div>
+</aside>
