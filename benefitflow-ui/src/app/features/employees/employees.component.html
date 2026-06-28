@@ -1,61 +1,98 @@
-<div class="page-grid">
-  <section class="stats-grid">
-    <article class="stat-card">
-      <div class="stat-card__label"><span>Employees</span><span class="pill brand">LIVE</span></div>
-      <div class="stat-card__value">1,284</div>
-      <div class="stat-card__foot">Up from 1,158 last quarter</div>
-    </article>
-    <article class="stat-card">
-      <div class="stat-card__label"><span>Active members</span><span class="pill success">OK</span></div>
-      <div class="stat-card__value">1,241</div>
-      <div class="stat-card__foot">96.6% active enrollment</div>
-    </article>
-    <article class="stat-card">
-      <div class="stat-card__label"><span>Pending activation</span><span class="pill warning">WAIT</span></div>
-      <div class="stat-card__value">43</div>
-      <div class="stat-card__foot">Mostly new hires</div>
-    </article>
-    <article class="stat-card">
-      <div class="stat-card__label"><span>Coverage gaps</span><span class="pill info">INFO</span></div>
-      <div class="stat-card__value">12</div>
-      <div class="stat-card__foot">Need package review</div>
-    </article>
-  </section>
+<h2 mat-dialog-title>{{ isEdit ? 'Edit Employee' : 'New Employee' }}</h2>
 
-  <section class="table-card">
-    <div class="card-header">
-      <div>
-        <h2 class="card-title">Employees</h2>
-        <p class="card-subtitle">Roster overview with assigned company and benefit plan.</p>
-      </div>
-      <button class="secondary-btn" type="button">Import CSV</button>
+<mat-dialog-content>
+  <form [formGroup]="form" id="employee-form" (ngSubmit)="submit()">
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>First name</mat-label>
+        <input matInput formControlName="firstName" />
+        @if (form.controls.firstName.hasError('required')) {
+          <mat-error>Required</mat-error>
+        }
+        @if (form.controls.firstName.hasError('whitespace') && form.controls.firstName.touched) {
+          <mat-error>Cannot be blank or spaces only</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Last name</mat-label>
+        <input matInput formControlName="lastName" />
+        @if (form.controls.lastName.hasError('required')) {
+          <mat-error>Required</mat-error>
+        }
+        @if (form.controls.lastName.hasError('whitespace') && form.controls.lastName.touched) {
+          <mat-error>Cannot be blank or spaces only</mat-error>
+        }
+      </mat-form-field>
     </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Employee</th>
-            <th>Company</th>
-            <th>Role</th>
-            <th>Package</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let employee of employees">
-            <td><strong>{{ employee.name }}</strong></td>
-            <td>{{ employee.company }}</td>
-            <td>{{ employee.role }}</td>
-            <td>{{ employee.package }}</td>
-            <td>
-              <span class="pill" [class.success]="employee.status === 'Active'" [class.warning]="employee.status === 'Pending'">
-                {{ employee.status }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+      @if (form.controls.email.hasError('required')) {
+        <mat-error>Required</mat-error>
+      }
+      @if (form.controls.email.hasError('email')) {
+        <mat-error>Enter a valid email</mat-error>
+      }
+      @if (form.controls.email.hasError('whitespace') && form.controls.email.touched) {
+        <mat-error>Cannot be blank or spaces only</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Job title</mat-label>
+      <input matInput formControlName="jobTitle" />
+    </mat-form-field>
+
+    <!-- Company selector — admin only. HR manager always assigns to their own company. -->
+    @if (isAdmin()) {
+      <mat-form-field appearance="outline">
+        <mat-label>Company</mat-label>
+        <mat-select formControlName="companyId">
+          @for (company of companies(); track company.id) {
+            <mat-option [value]="company.id">{{ company.name }}</mat-option>
+          }
+        </mat-select>
+        @if (form.controls.companyId.hasError('required')) {
+          <mat-error>Required</mat-error>
+        }
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option value="active">Active</mat-option>
+        <mat-option value="inactive">Inactive</mat-option>
+        <mat-option value="on_leave">On Leave</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Role selector — only shown when editing an employee that has a linked user.
+             Admin sees all three roles. HR manager sees employee and hr_manager only. -->
+    @if (isEdit && data?.user) {
+      <mat-form-field appearance="outline">
+        <mat-label>Role</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="employee">Employee</mat-option>
+          <mat-option value="hr_manager">HR Manager</mat-option>
+          @if (isAdmin()) {
+            <mat-option value="admin">Admin</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-flat-button type="submit" form="employee-form" [disabled]="loading()">
+    @if (loading()) {
+      <mat-spinner diameter="20" />
+    } @else {
+      {{ isEdit ? 'Save' : 'Create' }}
+    }
+  </button>
+</mat-dialog-actions>

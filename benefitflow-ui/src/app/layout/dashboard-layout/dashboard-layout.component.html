@@ -1,4 +1,8 @@
 <div class="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <!-- Global loading bar — visible during any in-flight HTTP request -->
+  @if (loading.isLoading()) {
+    <mat-progress-bar mode="indeterminate" class="fixed top-0 left-0 right-0 z-[100]" />
+  }
   <div class="flex min-h-screen">
     <app-dashboard-sidebar
       [open]="sidebarOpen()"

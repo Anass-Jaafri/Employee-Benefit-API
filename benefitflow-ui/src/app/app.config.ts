@@ -1,4 +1,9 @@
-import { APP_INITIALIZER, ApplicationConfig, ErrorHandler, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  APP_INITIALIZER,
+  ApplicationConfig,
+  ErrorHandler,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -6,6 +11,7 @@ import { MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { provideDateFnsAdapter } from '@angular/material-date-fns-adapter';
 import { enGB } from 'date-fns/locale';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { routes } from './app.routes';
 import { AuthService } from './core/services/auth.service';
 import { GlobalErrorHandler } from './core/handlers/global-error.handler';
@@ -31,7 +37,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([loadingInterceptor, authInterceptor])),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: MAT_DATE_LOCALE, useValue: enGB },
     { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS },

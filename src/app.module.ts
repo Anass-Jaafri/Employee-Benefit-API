@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CompaniesModule } from './companies/companies.module';
@@ -13,6 +13,8 @@ import { ClaimsModule } from './claims/claims.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -23,8 +25,8 @@ import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60_000,   // 1 minute window
-        limit: 60,     // 60 requests per minute — default for all endpoints
+        ttl: 60_000, // 1 minute window
+        limit: 60, // 60 requests per minute — default for all endpoints
       },
     ]),
     TypeOrmModule.forRootAsync({
@@ -39,7 +41,7 @@ import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         synchronize: false,
-        migrationsRun: true,        // auto-run pending migrations on startup
+        migrationsRun: true, // auto-run pending migrations on startup
         timezone: 'UTC',
       }),
     }),
@@ -49,11 +51,21 @@ import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
     EmployeesModule,
     BenefitPackagesModule,
     ClaimsModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, {
-    provide: APP_GUARD,
-    useClass: CustomThrottlerGuard,
-  },],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // Apply to every route — the middleware logs after the response finishes
+    // so it captures the real status code and duration for every request
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

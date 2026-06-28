@@ -1,55 +1,207 @@
-<div class="page-grid">
-  <section class="card">
-    <div class="card-header">
+<section class="page-header">
+  <div>
+    <h1 class="page-title">Benefit Packages</h1>
+    <p class="page-subtitle">
+      {{
+        isEmployee()
+          ? 'View the benefit packages you are enrolled in.'
+          : 'Manage benefit packages, enrollment access, and package status.'
+      }}
+    </p>
+  </div>
+
+  @if (!isEmployee()) {
+    <button
+      type="button"
+      mat-flat-button
+      color="primary"
+      class="!rounded-xl"
+      (click)="openDialog()"
+    >
+      <mat-icon>add</mat-icon>
+      <span>New Package</span>
+    </button>
+  }
+</section>
+
+<section class="grid gap-4 md:grid-cols-3">
+  <div class="stat-card">
+    <p class="stat-label">{{ isEmployee() ? 'Enrolled' : 'Packages' }}</p>
+    <p class="stat-value">{{ total() || packages().length }}</p>
+    <p class="stat-meta">
+      {{ isEmployee() ? 'Packages you are enrolled in' : 'Benefit packages in the system' }}
+    </p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Active</p>
+    <p class="stat-value">{{ activeCount() }}</p>
+    <p class="stat-meta">
+      {{ isEmployee() ? 'Currently active enrollments' : 'Packages currently available' }}
+    </p>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Inactive</p>
+    <p class="stat-value">{{ inactiveCount() }}</p>
+    <p class="stat-meta">
+      {{ isEmployee() ? 'Inactive enrollments' : 'Packages not currently offered' }}
+    </p>
+  </div>
+</section>
+
+@if (!isEmployee() && !isHrManager()) {
+  <section class="content-card mt-6">
+    <form [formGroup]="filterForm" class="grid gap-4 md:grid-cols-2">
       <div>
-        <h2 class="card-title">Benefit packages</h2>
-        <p class="card-subtitle">Design and compare plans for each company segment.</p>
+        <label class="mb-2 block text-sm font-semibold text-slate-700 dark:text-white">
+          Status
+        </label>
+        <select
+          formControlName="isActive"
+          class="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:focus:ring-sky-900/30"
+        >
+          <option value="">All statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
       </div>
-      <button class="primary-btn" type="button">Create package</button>
-    </div>
+    </form>
 
-    <div class="three-col">
-      <article class="card" *ngFor="let package of packages">
-        <span class="pill" [class.info]="package.accent === 'info'" [class.brand]="package.accent === 'brand'" [class.success]="package.accent === 'success'">
-          {{ package.name }}
-        </span>
-        <h3 style="margin:14px 0 8px;font-size:2rem;">{{ package.price }}</h3>
-        <p class="card-subtitle">{{ package.description }}</p>
-        <ul style="margin:18px 0 0;padding-left:18px;color:var(--text);line-height:1.9;">
-          <li *ngFor="let feature of package.features">{{ feature }}</li>
-        </ul>
-      </article>
+    <div class="mt-4 flex justify-end">
+      <button
+        mat-stroked-button
+        type="button"
+        class="!rounded-xl dark:!border-slate-700 dark:!text-slate-200"
+        (click)="resetFilters()"
+      >
+        Reset Filters
+      </button>
     </div>
   </section>
+}
 
-  <section class="two-col">
-    <article class="card">
-      <h3 class="card-title">Coverage mix</h3>
-      <p class="card-subtitle">How packages are distributed across the platform.</p>
-      <div class="stack" style="margin-top:18px;">
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Starter</strong><span>24%</span></div>
-          <div class="progress-line"><span style="width:24%"></span></div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Corporate Plus</strong><span>38%</span></div>
-          <div class="progress-line"><span style="width:38%"></span></div>
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><strong>Premium Family</strong><span>38%</span></div>
-          <div class="progress-line"><span style="width:38%"></span></div>
-        </div>
-      </div>
-    </article>
+<section class="data-table-shell mt-6">
+  @if (loading()) {
+    <div class="flex items-center justify-center p-12">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (!packages().length) {
+    <div class="p-10 text-center">
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        {{ isEmployee() ? 'No enrolled packages' : 'No benefit packages found' }}
+      </h3>
+      <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        {{
+          isEmployee()
+            ? 'You have not been enrolled in any benefit packages yet. Contact your HR manager.'
+            : 'Create a package or adjust your filters.'
+        }}
+      </p>
+    </div>
+  } @else {
+    <div class="table-scroll">
+      <table class="app-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            @if (!isEmployee()) {
+              <th>Company</th>
+            }
+            <th>Limit</th>
+            <th>Perks</th>
+            <th>Status</th>
+            @if (!isEmployee()) {
+              <th class="!text-right">Actions</th>
+            }
+          </tr>
+        </thead>
 
-    <article class="card">
-      <h3 class="card-title">Package rules</h3>
-      <p class="card-subtitle">Use these controls to keep offerings aligned with company size and budget.</p>
-      <div class="stack" style="margin-top:18px;">
-        <div class="empty-state">Minimum employees threshold: 10</div>
-        <div class="empty-state">Automatic upgrade suggested at 250 employees</div>
-        <div class="empty-state">Family plan available for premium tiers only</div>
-      </div>
-    </article>
-  </section>
-</div>
+        <tbody>
+          @for (p of packages(); track p.id) {
+            <tr>
+              <td>
+                <div class="font-semibold text-slate-900 dark:text-white">{{ p.name }}</div>
+              </td>
+              @if (!isEmployee()) {
+                <td>{{ p.company?.name ?? '—' }}</td>
+              }
+              <td>
+                @if (p.maxBenefitAmount) {
+                  {{ p.maxBenefitAmount | currency: 'EUR' : 'symbol' : '1.0-0' }}
+                } @else {
+                  No limit
+                }
+              </td>
+              <td>
+                <div class="flex flex-wrap gap-2">
+                  @for (perk of p.perks; track perk) {
+                    <span
+                      class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      {{ perkLabel(perk) }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td>
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                  [class.bg-emerald-100]="p.isActive"
+                  [class.text-emerald-700]="p.isActive"
+                  [class.bg-slate-100]="!p.isActive"
+                  [class.text-slate-700]="!p.isActive"
+                  [class.dark:bg-slate-800]="!p.isActive"
+                  [class.dark:text-slate-200]="!p.isActive"
+                >
+                  {{ p.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              @if (!isEmployee()) {
+                <td>
+                  <div class="flex justify-end gap-2">
+                    @if (isHrManager()) {
+                      <button
+                        mat-icon-button
+                        type="button"
+                        matTooltip="Enroll employee"
+                        (click)="openEnrollDialog(p)"
+                      >
+                        <mat-icon>person_add</mat-icon>
+                      </button>
+                    }
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Edit package"
+                      (click)="openDialog(p)"
+                    >
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      color="warn"
+                      matTooltip="Delete package"
+                      (click)="delete(p)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (!isEmployee() && !isHrManager()) {
+      <mat-paginator
+        [length]="total()"
+        [pageSize]="limit()"
+        [pageIndex]="page() - 1"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)"
+      />
+    }
+  }
+</section>

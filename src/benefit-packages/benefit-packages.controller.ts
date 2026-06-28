@@ -13,7 +13,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/users/user.entity';
@@ -23,13 +28,12 @@ import { UpdateBenefitPackageDto } from './dto/update-benefit-package.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { EmployeesService } from 'src/employees/employees.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { FilterClaimsDto } from 'src/claims/dto/filter-claims.dto';
 import { FilterBenefitPackagesDto } from './dto/filter-benefit-packages.dto';
 
 @ApiTags('benefit-packages')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Controller('benefit-packages')
+@Controller({ path: 'benefit-packages', version: '1' })
 export class BenefitPackagesController {
   constructor(
     private readonly employeesService: EmployeesService,
@@ -71,6 +75,8 @@ export class BenefitPackagesController {
   }
 
   @ApiOperation({ summary: 'Create a benefit package for my company' })
+  @ApiResponse({ status: 201, description: 'Package created' })
+  @ApiResponse({ status: 403, description: 'Forbidden — HR manager only' })
   @Post('my-company')
   @Roles(UserRole.HR_MANAGER)
   createForMyCompany(
@@ -92,6 +98,12 @@ export class BenefitPackagesController {
   }
 
   @ApiOperation({ summary: 'Enroll an employee in a benefit package' })
+  @ApiResponse({ status: 201, description: 'Employee enrolled' })
+  @ApiResponse({
+    status: 403,
+    description: 'Package or employee does not belong to your company',
+  })
+  @ApiResponse({ status: 409, description: 'Employee already enrolled' })
   @Post(':id/enroll/:employeeId')
   @Roles(UserRole.HR_MANAGER, UserRole.ADMIN)
   async enrollEmployee(

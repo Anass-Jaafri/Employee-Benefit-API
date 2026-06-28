@@ -61,7 +61,7 @@ export class AuthService {
         tap(() => this._currentUser.set(null)),
         map(() => undefined),
         catchError(() => {
-          this._currentUser.set(null); // clear locally even if request fails
+          this._currentUser.set(null);
           return of(undefined);
         }),
       );
@@ -69,7 +69,6 @@ export class AuthService {
 
   refresh(): Observable<void> {
     if (this._isRefreshing) {
-      // Another request already triggered a refresh — wait for it
       return this._refreshSubject.pipe(
         filter((done) => done),
         take(1),

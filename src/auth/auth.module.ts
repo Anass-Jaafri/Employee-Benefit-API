@@ -11,11 +11,21 @@ import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard';
 import { Company } from 'src/companies/companies.entity';
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 import { User } from 'src/users/user.entity';
+import { RefreshToken } from './refresh-token.entity';
+import { RefreshTokenService } from './refresh-token.service';
+import { LoginAttempt } from './login-attempt.entity';
+import { LoginAttemptService } from './login-attempt.service';
 
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([Employee, Company, User]), UsersModule,
+    TypeOrmModule.forFeature([
+      Employee,
+      Company,
+      User,
+      RefreshToken,
+      LoginAttempt,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -26,7 +36,14 @@ import { User } from 'src/users/user.entity';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, JwtRefreshStrategy, JwtRefreshGuard],
+  providers: [
+    AuthService,
+    RefreshTokenService,
+    LoginAttemptService,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    JwtRefreshGuard,
+  ],
   controllers: [AuthController],
 })
-export class AuthModule { }
+export class AuthModule {}

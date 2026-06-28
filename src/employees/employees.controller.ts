@@ -11,7 +11,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { EmployeesService } from './employees.service';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -28,7 +33,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 @ApiTags('employees')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Controller('employees')
+@Controller({ path: 'employees', version: '1' })
 export class EmployeesController {
   constructor(
     private employeesService: EmployeesService,
@@ -73,6 +78,9 @@ export class EmployeesController {
   }
 
   @ApiOperation({ summary: 'Create employee' })
+  @ApiResponse({ status: 201, description: 'Employee created' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
   @Post()
   createEmployee(@Body() data: CreateEmployeeDto) {
@@ -119,6 +127,9 @@ export class EmployeesController {
   }
 
   @ApiOperation({ summary: 'Delete employee' })
+  @ApiResponse({ status: 200, description: 'Employee deleted' })
+  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
+  @ApiResponse({ status: 404, description: 'Employee not found' })
   @Roles(UserRole.ADMIN)
   @Delete(':id')
   removeEmployee(@Param('id', ParseIntPipe) id: number) {

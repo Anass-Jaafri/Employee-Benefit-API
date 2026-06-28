@@ -2,18 +2,26 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { LoadingService } from '../../core/services/loading.service';
 import { DashboardHeaderComponent } from '../components/dashboard-header/dashboard-header.component';
 import { DashboardSidebarComponent } from '../components/dashboard-sidebar/dashboard-sidebar.component';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [RouterOutlet, DashboardHeaderComponent, DashboardSidebarComponent],
+  imports: [
+    RouterOutlet,
+    DashboardHeaderComponent,
+    DashboardSidebarComponent,
+    MatProgressBarModule,
+  ],
   templateUrl: './dashboard-layout.component.html',
 })
 export class DashboardLayoutComponent {
   private readonly authService = inject(AuthService);
   readonly theme = inject(ThemeService);
+  readonly loading = inject(LoadingService);
 
   readonly currentUser = this.authService.currentUser;
   readonly currentRole = computed(
@@ -25,12 +33,10 @@ export class DashboardLayoutComponent {
   openSidebar(): void {
     this.sidebarOpen.set(true);
   }
-
   closeSidebar(): void {
     this.sidebarOpen.set(false);
   }
-
   toggleSidebar(): void {
-    this.sidebarOpen.update((value) => !value);
+    this.sidebarOpen.update((v) => !v);
   }
 }

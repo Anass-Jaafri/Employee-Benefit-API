@@ -14,28 +14,7 @@ import { EmployeeDashboardComponent } from './components/employee-dashboard.comp
     HrDashboardComponent,
     EmployeeDashboardComponent,
   ],
-  template: `
-    <section class="page-header">
-      <div>
-        <h1 class="page-title">Dashboard Overview</h1>
-        <p class="page-subtitle">
-          Welcome back. Here is a quick summary of your benefits workspace.
-        </p>
-      </div>
-    </section>
-
-    @if (isAdmin()) {
-      <app-admin-dashboard />
-    } @else if (isHrManager()) {
-      <app-hr-dashboard />
-    } @else if (isEmployee()) {
-      <app-employee-dashboard />
-    } @else {
-      <div class="content-card">
-        <p class="text-sm text-slate-600">No dashboard is available for your current role.</p>
-      </div>
-    }
-  `,
+  templateUrl: `./dashboard-home.component.html`,
 })
 export class DashboardHomeComponent {
   private readonly authService = inject(AuthService);

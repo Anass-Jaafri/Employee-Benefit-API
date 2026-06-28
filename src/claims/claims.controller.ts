@@ -10,7 +10,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { UserRole } from 'src/users/user.entity';
@@ -25,7 +30,7 @@ import { FilterClaimsDto } from './dto/filter-claims.dto';
 @ApiTags('claims')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Controller('claims')
+@Controller({ path: 'claims', version: '1' })
 export class ClaimsController {
   constructor(
     private claimsService: ClaimsService,
@@ -33,6 +38,8 @@ export class ClaimsController {
   ) {}
 
   @ApiOperation({ summary: 'Get all claims (admin only)' })
+  @ApiResponse({ status: 200, description: 'Paginated list of all claims' })
+  @ApiResponse({ status: 403, description: 'Forbidden — admin only' })
   @Roles(UserRole.ADMIN)
   @Get()
   findAll(
@@ -43,6 +50,9 @@ export class ClaimsController {
   }
 
   @Get('my-company-claims')
+  @ApiOperation({
+    summary: 'Get claims submitted by the employees in the HR manager company',
+  })
   @Roles(UserRole.HR_MANAGER)
   async findMyCompany(
     @CurrentUser() user: { id: number },
@@ -77,12 +87,17 @@ export class ClaimsController {
   }
 
   @ApiOperation({ summary: 'Submit a claim' })
+  @ApiResponse({ status: 201, description: 'Claim submitted successfully' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
   @Post()
   createClaim(@Body() dto: CreateClaimDto, @CurrentUser() user) {
     return this.claimsService.createClaim(dto, user.id);
   }
 
   @ApiOperation({ summary: 'Review a claim (admin/HR only)' })
+  @ApiResponse({ status: 200, description: 'Claim reviewed' })
+  @ApiResponse({ status: 403, description: 'Forbidden — HR/admin only' })
+  @ApiResponse({ status: 404, description: 'Claim not found' })
   @Roles(UserRole.ADMIN, UserRole.HR_MANAGER)
   @Patch(':id/review')
   reviewClaim(

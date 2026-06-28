@@ -19,7 +19,7 @@ import { BenefitPackage } from '../benefit-packages/benefit-package.entity';
 import { ClaimResponseDto } from './dto/claim-response.dto';
 import { toDto, toDtoArray } from 'src/common/helpers/serialize';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { paginate, PaginatedResult } from 'src/common/helpers/paginate';
+import { paginate } from 'src/common/helpers/paginate';
 import { FilterClaimsDto } from './dto/filter-claims.dto';
 
 @Injectable()
@@ -40,7 +40,6 @@ export class ClaimsService {
     if (filters.claimType) where.claimType = filters.claimType;
     if (filters.employeeId) where.employee = { id: filters.employeeId };
 
-    // Date range — build createdAt condition based on which bounds are provided
     if (filters.fromDate && filters.toDate) {
       where.createdAt = Between(
         new Date(filters.fromDate),

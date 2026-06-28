@@ -29,7 +29,7 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     label: 'Benefit Packages',
     route: '/dashboard/benefit-packages',
     icon: 'card_giftcard',
-    roles: ['admin', 'hr_manager'],
+    roles: ['admin', 'hr_manager', 'employee'],
   },
   {
     label: 'Claims',

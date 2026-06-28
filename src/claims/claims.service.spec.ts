@@ -7,7 +7,6 @@ import { BenefitPackage } from 'src/benefit-packages/benefit-package.entity';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 
-// QueryBuilder chain mock
 const mockQB = {
   select: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),

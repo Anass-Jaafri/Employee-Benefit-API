@@ -20,6 +20,9 @@ import { toDto, toDtoArray } from 'src/common/helpers/serialize';
 import { ConfigService } from '@nestjs/config';
 import { Company } from 'src/companies/companies.entity';
 
+import { RefreshTokenService } from './refresh-token.service';
+import { LoginAttemptService } from './login-attempt.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -27,6 +30,8 @@ export class AuthService {
     private jwtService: JwtService,
     private dataSource: DataSource,
     private config: ConfigService,
+    private refreshTokenService: RefreshTokenService,
+    private loginAttemptService: LoginAttemptService,
 
     @InjectRepository(Company) private companiesRepository: Repository<Company>,
     @InjectRepository(User) private usersRepository: Repository<User>,
@@ -69,16 +74,35 @@ export class AuthService {
   }
 
   async login(data: LoginUserDto) {
-    //Find user
-    const user = await this.usersService.findByEmail(data.email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    // ── Step 1: Check lockout BEFORE touching the password ───────────────────
+    // Throws 429 immediately if the account is currently locked.
+    // Checked first so we don't leak timing info about whether the user exists.
+    await this.loginAttemptService.checkLockout(data.email);
 
-    //Compare passwords
+    // ── Step 2: Verify credentials ───────────────────────────────────────────
+    const user = await this.usersService.findByEmail(data.email);
+    if (!user) {
+      // Still record a failure for the email to prevent user enumeration
+      // (attacker can't distinguish "wrong email" from "wrong password")
+      await this.loginAttemptService.recordFailure(data.email);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
     const isMatch = await bcrypt.compare(data.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    if (!isMatch) {
+      // Increment counter — lock after MAX_ATTEMPTS consecutive failures
+      await this.loginAttemptService.recordFailure(data.email);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // ── Step 3: Success — clear failure counter and issue tokens ────────────
+    await this.loginAttemptService.clearFailures(data.email);
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     const { accessToken, refreshToken } = this.generateTokens(payload);
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await this.refreshTokenService.save(user.id, refreshToken, expiresAt);
 
     return {
       accessToken,
@@ -165,6 +189,38 @@ export class AuthService {
     await this.dataSource.getRepository(User).save(user);
 
     return { message: 'Password updated successfully' };
+  }
+
+  /**
+   * Validates the incoming refresh token against the DB, revokes it,
+   * and issues a fresh pair (token rotation).
+   */
+  async refresh(
+    rawRefreshToken: string,
+    user: { id: number; email: string; role: UserRole },
+  ) {
+    // Will throw 401 if not found, revoked, or expired
+    await this.refreshTokenService.validate(rawRefreshToken);
+
+    // Revoke the used token immediately (rotation)
+    await this.refreshTokenService.revoke(rawRefreshToken);
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const { accessToken, refreshToken: newRefreshToken } =
+      this.generateTokens(payload);
+
+    // Persist the brand-new refresh token
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await this.refreshTokenService.save(user.id, newRefreshToken, expiresAt);
+
+    return { accessToken, refreshToken: newRefreshToken };
+  }
+
+  /** Revokes the refresh token in the DB so it can't be reused after logout */
+  async logout(rawRefreshToken: string | undefined): Promise<void> {
+    if (rawRefreshToken) {
+      await this.refreshTokenService.revoke(rawRefreshToken);
+    }
   }
 
   generateTokens(payload: { sub: number; email: string; role: UserRole }) {
